@@ -1,0 +1,24 @@
+{
+  "name": "J8NIX — Smart Operations OS",
+  "short_name": "J8NIX",
+  "description": "Smart Operations OS: calendar, tasks, projects, voice assistant and live status in one clean workspace.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ccd8e5",
+  "theme_color": "#ccd8e5",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "J8NIX_LOGO.png",
+      "sizes": "782x346",
+      "type": "image/png"
+    }
+  ]
+}

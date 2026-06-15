@@ -1,0 +1,18 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# macOS custom-folder-icon artifacts
+Icon?
+Icon$'\r'
+
+# Node (none used, but guard against accidental installs)
+node_modules/
+npm-debug.log*
+
+# Local notes / scratch
+*.log
+.tmp/

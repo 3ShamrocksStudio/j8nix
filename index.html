@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="J8NIX — Smart Operations OS. Calendar, tasks, projects, voice assistant and live status in one clean workspace.">
+    <meta name="theme-color" content="#ccd8e5">
+    <!-- CSP: no eval, no remote script. Allow inline styles/scripts (single-file app) + Google Fonts + data/blob media. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <title>J8NIX — Smart Operations OS, Only Smarter</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #ccd8e5;
+            --panel-bg: #ffffff;
+            --accent: #f2c194;
+            --accent-deep: #e0a878;
+            --neutral: #586475;
+            --secondary: #6a809b;
+            --success: #7bb48b;
+            --urgent: #e16a66;
+            --text: #102a43;
+            --text-sub: #586475;
+            --border: #e0e7f0;
+            --shadow: 0 4px 20px rgba(16,42,67,0.07);
+            --radius: 16px;
+        }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            margin: 0;
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        /* Accessible focus ring everywhere */
+        :focus-visible { outline: 3px solid var(--neutral); outline-offset: 2px; border-radius: 6px; }
+        .skip-link {
+            position: absolute; left: -999px; top: 8px; z-index: 100;
+            background: var(--text); color: #fff; padding: 10px 16px; border-radius: 8px;
+        }
+        .skip-link:focus { left: 8px; }
+
+        header {
+            background: #fff;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(16,42,67,0.05);
+            position: sticky; top: 0; z-index: 20;
+            flex-wrap: wrap;
+        }
+        .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+        .logo { height: 40px; width: auto; display: block; }
+        .tagline-img { height: 14px; width: auto; display: block; opacity: 0.85; }
+        .tagline-text {
+            font-size: 11px; font-weight: 700; letter-spacing: 1.4px;
+            color: var(--neutral); text-transform: uppercase;
+        }
+        .header-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .user-info { font-weight: 600; color: var(--neutral); font-size: 13px; }
+        .badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;
+            background: #eef3f8; color: var(--neutral);
+        }
+        .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+        .badge.drive-on { background: #fdeee0; color: var(--accent-deep); }
+        .badge.drive-on .dot { background: var(--accent-deep); animation: pulse 1.2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+        .workspace {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 280px minmax(0,1fr) 340px;
+            gap: 16px;
+            padding: 16px;
+            align-items: start;
+        }
+        .panel {
+            background: var(--panel-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+        .panel-header {
+            padding: 14px 18px;
+            font-size: 12px; font-weight: 800; letter-spacing: 0.6px;
+            text-transform: uppercase; color: var(--neutral);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+        }
+        .panel-body { padding: 16px 18px; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+        th { font-weight: 700; color: var(--neutral); background: #f8fafd; white-space: nowrap; position: sticky; top: 0; }
+        tbody tr:hover { background: #fbfcfe; }
+        td[contenteditable="true"] { cursor: text; border-radius: 6px; }
+        td[contenteditable="true"]:focus { background: #fff7ee; outline: 2px solid var(--accent); }
+        .row-actions { white-space: nowrap; }
+        .icon-btn {
+            background: transparent; border: none; cursor: pointer; padding: 4px 7px;
+            border-radius: 8px; font-size: 14px; color: var(--secondary); line-height: 1;
+        }
+        .icon-btn:hover { background: #eef3f8; color: var(--urgent); }
+
+        button {
+            cursor: pointer; border: none; border-radius: 999px;
+            padding: 9px 16px; font-weight: 700; font-size: 13px;
+            font-family: inherit; transition: transform .08s ease, filter .15s ease;
+        }
+        button:active { transform: translateY(1px); }
+        .primary { background: var(--accent); color: #5a3d1e; }
+        .primary:hover { filter: brightness(1.05); }
+        .ghost { background: #eef3f8; color: var(--neutral); }
+        .ghost:hover { background: #e3ebf3; }
+
+        .status-pill {
+            padding: 4px 11px; border-radius: 999px; font-size: 11px; font-weight: 800;
+            cursor: pointer; border: none; letter-spacing: .3px; text-transform: uppercase;
+        }
+
+        /* Calendar */
+        .cal-head { display:flex; align-items:center; justify-content:space-between; padding: 12px 16px 4px; }
+        .cal-title { font-weight: 800; font-size: 14px; }
+        .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; padding: 8px 14px 16px; }
+        .cal-grid .dow { font-size: 10px; font-weight: 800; color: var(--secondary); text-align: center; padding: 4px 0; text-transform: uppercase; }
+        .cal-cell {
+            aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+            font-size: 12px; border-radius: 8px; color: var(--text); cursor: pointer; position: relative;
+        }
+        .cal-cell:hover { background: #eef3f8; }
+        .cal-cell.empty { cursor: default; }
+        .cal-cell.today { background: var(--accent); color: #5a3d1e; font-weight: 800; }
+        .cal-cell.has-task::after { content:""; position:absolute; bottom:4px; width:5px; height:5px; border-radius:50%; background: var(--urgent); }
+
+        /* Progress ring */
+        .progress-wrap { display:flex; flex-direction: column; align-items: center; padding: 8px 0 18px; }
+        .progress-circle { width: 168px; height: 168px; transform: rotate(-90deg); }
+        .progress-center { text-align:center; margin-top: -116px; margin-bottom: 70px; pointer-events:none; }
+        .progress-center .big { font-size: 40px; font-weight: 800; color: var(--accent-deep); line-height: 1; }
+        .progress-center .sub { font-size: 12px; color: var(--neutral); margin-top: 4px; }
+
+        .stat-grid { display:grid; grid-template-columns: repeat(3,1fr); padding: 22px 16px; text-align:center; gap: 8px; }
+        .stat-grid .n { font-size: 26px; font-weight: 800; color: var(--text); }
+        .stat-grid .l { font-size: 12px; color: var(--neutral); }
+        .live-line { display:flex; align-items:center; gap:8px; padding: 10px 18px; border-top: 1px solid var(--border); font-size: 12px; color: var(--neutral); }
+
+        .qa-list { display:flex; flex-direction: column; gap: 9px; padding: 16px; }
+        .qa-list button { width: 100%; text-align: left; padding: 11px 16px; }
+
+        /* Chat */
+        .chat-area { margin: 0 16px 16px; display: flex; flex-direction: column; min-height: 280px; }
+        .chat-feed {
+            flex: 1; padding: 18px; overflow-y: auto; background: #f8fafd;
+            display: flex; flex-direction: column; gap: 10px; min-height: 140px; max-height: 320px;
+        }
+        .chat-feed.dragover { outline: 3px dashed var(--accent); outline-offset: -10px; background: #fff7ee; }
+        .message { padding: 12px 16px; border-radius: 16px; max-width: 78%; font-size: 13px; word-wrap: break-word; overflow-wrap: anywhere; }
+        .message.system { background: #fff; border: 1px solid var(--border); align-self: flex-start; border-bottom-left-radius: 4px; }
+        .message.user { background: var(--accent); color: #5a3d1e; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .message .meta { font-size: 10px; opacity: .6; margin-top: 5px; }
+        .message audio { width: 240px; max-width: 100%; margin-top: 6px; display:block; }
+        .message .file-chip { display:flex; align-items:center; gap:8px; font-weight:700; }
+        .chat-input-row { padding: 12px; background: #fff; border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .chat-input-row input[type=text] {
+            flex: 1; min-width: 140px; padding: 13px 18px; border: 1px solid var(--border);
+            border-radius: 999px; font-size: 14px; font-family: inherit; color: var(--text);
+        }
+        .chat-input-row input[type=text]:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+        .rec-dot { display:inline-block; width:9px; height:9px; border-radius:50%; background: var(--urgent); margin-right:6px; animation: pulse .9s infinite; }
+        button.listening { background: var(--urgent); color: #fff; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(16,42,67,.5); backdrop-filter: blur(2px);
+            display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: #fff; border-radius: 20px; max-width: 520px; width: 100%;
+            max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 60px rgba(16,42,67,.3);
+        }
+        .modal-head { padding: 20px 24px 8px; display:flex; align-items:center; justify-content: space-between; }
+        .modal-head h2 { margin: 0; font-size: 20px; }
+        .modal-body { padding: 8px 24px 24px; }
+        .field { margin-bottom: 16px; }
+        .field label { display:block; font-weight: 700; font-size: 13px; margin-bottom: 6px; color: var(--neutral); }
+        .field input, .field select {
+            width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 10px;
+            font-size: 14px; font-family: inherit; color: var(--text); background:#fff;
+        }
+        .switch-row { display:flex; align-items:center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .switch-row:last-child { border-bottom: none; }
+        .modal-foot { padding: 0 24px 24px; display:flex; gap: 10px; justify-content: flex-end; }
+        .onboard-step { text-align:center; padding: 8px 0 0; }
+        .onboard-step img { height: 44px; margin-bottom: 8px; }
+
+        /* Toast notifications */
+        .toast-stack { position: fixed; bottom: 20px; right: 20px; display:flex; flex-direction: column; gap: 10px; z-index: 60; max-width: 320px; }
+        .toast {
+            background: var(--text); color: #fff; padding: 13px 16px; border-radius: 12px;
+            font-size: 13px; box-shadow: 0 10px 30px rgba(16,42,67,.3); animation: slidein .25s ease;
+        }
+        .toast.success { background: var(--success); }
+        .toast.urgent { background: var(--urgent); }
+        @keyframes slidein { from{transform: translateY(12px); opacity:0} to{transform:none; opacity:1} }
+
+        /* Mobile action bar */
+        .mobile-bar { display: none; }
+
+        @media (max-width: 1080px) {
+            .workspace { grid-template-columns: 1fr; }
+            .progress-circle { width: 150px; height: 150px; }
+            .progress-center { margin-top: -104px; margin-bottom: 60px; }
+        }
+        @media (max-width: 640px) {
+            header { padding: 10px 14px; }
+            .logo { height: 32px; }
+            .user-info { display: none; }
+            .workspace { padding: 12px; gap: 12px; }
+            .chat-area { margin: 0 12px 80px; }
+            .mobile-bar {
+                display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;
+                background: #fff; border-top: 1px solid var(--border); padding: 8px;
+                gap: 8px; box-shadow: 0 -4px 16px rgba(16,42,67,.08);
+            }
+            .mobile-bar button { flex: 1; padding: 12px 4px; font-size: 12px; }
+        }
+        @media (prefers-reduced-motion: reduce) { *{ animation: none !important; transition: none !important; } }
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header>
+        <div class="brand">
+            <img src="J8NIX_notag.png" alt="J8NIX" class="logo" onerror="this.onerror=null;this.src='J8NIX_LOGO.png'">
+            <img src="J8NIX_tagline.png" alt="Smart Operations OS, Only Smarter" class="tagline-img"
+                 onerror="this.style.display='none';document.getElementById('taglineFallback').style.display='block'">
+            <span id="taglineFallback" class="tagline-text" style="display:none">Smart Operations OS, Only Smarter</span>
+        </div>
+        <div class="header-right">
+            <span id="driveBadge" class="badge" hidden><span class="dot"></span><span id="driveLabel">Stationary</span></span>
+            <span id="clockBadge" class="badge"><span class="dot"></span><span id="clockLabel">—</span></span>
+            <span class="user-info" id="userInfo">Dave Markovich • 3Shamrocks Studio</span>
+            <button class="primary" id="settingsBtn" aria-haspopup="dialog">⚙ Settings</button>
+        </div>
+    </header>
+
+    <main id="main" class="workspace">
+        <!-- LEFT: Calendar -->
+        <section class="panel" aria-label="Calendar">
+            <div class="panel-header">Calendar</div>
+            <div class="cal-head">
+                <button class="icon-btn" id="calPrev" aria-label="Previous month">‹</button>
+                <span class="cal-title" id="calTitle">—</span>
+                <button class="icon-btn" id="calNext" aria-label="Next month">›</button>
+            </div>
+            <div class="cal-grid" id="calGrid" role="grid"></div>
+        </section>
+
+        <!-- CENTER: Tasks + Projects -->
+        <div class="col">
+            <section class="panel" aria-label="Today's tasks">
+                <div class="panel-header">
+                    <span>Today's Tasks</span>
+                    <button class="ghost" id="addTaskBtn">+ New Task</button>
+                </div>
+                <div class="table-wrap">
+                    <table id="tasksTable">
+                        <thead><tr>
+                            <th>#</th><th>Project name</th><th>Created</th><th>Deadline</th><th>Who's on it?</th><th>Status</th><th>More</th><th></th>
+                        </tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel" aria-label="All active projects">
+                <div class="panel-header">
+                    <span>All Active Projects</span>
+                    <button class="ghost" id="addProjectBtn">+ New Project</button>
+                </div>
+                <div class="table-wrap">
+                    <table id="projectsTable">
+                        <thead><tr>
+                            <th>#</th><th>Client name</th><th>Project name</th><th>Deadline</th><th>Who's on it?</th><th>Status</th><th></th>
+                        </tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- RIGHT: Progress + Live status + Quick actions -->
+        <div class="col">
+            <section class="panel" aria-label="Daily progress">
+                <div class="panel-header">Daily Progress</div>
+                <div class="progress-wrap">
+                    <svg class="progress-circle" viewBox="0 0 120 120" role="img" aria-label="Daily progress ring">
+                        <circle cx="60" cy="60" r="52" fill="none" stroke="#e6e9ef" stroke-width="11"></circle>
+                        <circle id="progressArc" cx="60" cy="60" r="52" fill="none" stroke="#f2c194"
+                                stroke-width="11" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"></circle>
+                    </svg>
+                    <div class="progress-center">
+                        <div class="big" id="progressFraction">4/9</div>
+                        <div class="sub">Tasks left</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel" aria-label="Live status">
+                <div class="panel-header">Live Status</div>
+                <div class="stat-grid">
+                    <div><div class="n" id="statClients">0</div><div class="l">Clients</div></div>
+                    <div><div class="n" id="statProjects">0</div><div class="l">Projects</div></div>
+                    <div><div class="n" id="statTasks">0</div><div class="l">Tasks</div></div>
+                </div>
+                <div class="live-line"><span class="badge"><span class="dot"></span>Systems nominal</span><span id="speedLine"></span></div>
+            </section>
+
+            <section class="panel" aria-label="Quick actions" style="flex:1">
+                <div class="panel-header">Quick Actions</div>
+                <div class="qa-list">
+                    <button class="primary" data-qa="newProject">＋ New project</button>
+                    <button class="primary" data-qa="newTask">✓ New task</button>
+                    <button class="primary" data-qa="reminder">⏰ New reminder</button>
+                    <button class="primary" data-qa="audit">📋 Audit projects</button>
+                    <button class="primary" data-qa="memo">🎤 Record voice memo</button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- BOTTOM: Chat -->
+    <section class="panel chat-area" aria-label="J8NIX assistant chat">
+        <div class="panel-header">
+            <span>J8NIX Chat • Smart Assistant <span id="voiceState" style="font-weight:600;text-transform:none;color:var(--secondary)"></span></span>
+            <button class="ghost" id="wakeBtn" aria-pressed="false" title="Toggle wake-word listening">🛜 Wake word: off</button>
+        </div>
+        <div id="chatFeed" class="chat-feed" aria-live="polite" aria-label="Conversation"></div>
+        <div class="chat-input-row">
+            <input id="chatInput" type="text" autocomplete="off" placeholder="Type a message or say “Hey J8NIX…”  (drag files here to attach)" aria-label="Message J8NIX">
+            <button class="primary" id="sendBtn">Send</button>
+            <button class="primary" id="recBtn" title="Record voice memo">🎤 Record</button>
+            <button class="primary" id="speakBtn" title="Speak last reply">🔊 Speak</button>
+        </div>
+    </section>
+
+    <!-- Mobile action bar -->
+    <nav class="mobile-bar" aria-label="Quick actions">
+        <button class="primary" data-qa="newTask">✓ Task</button>
+        <button class="primary" data-qa="newProject">＋ Project</button>
+        <button class="primary" data-qa="memo">🎤 Memo</button>
+        <button class="ghost" id="settingsBtnMobile">⚙</button>
+    </nav>
+
+    <!-- Settings / Onboarding modal -->
+    <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal">
+            <div class="modal-head">
+                <h2 id="modalTitle">Settings</h2>
+                <button class="icon-btn" id="modalClose" aria-label="Close" style="font-size:20px">✕</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-foot" id="modalFoot"></div>
+        </div>
+    </div>
+
+    <div class="toast-stack" id="toastStack" aria-live="assertive"></div>
+
+    <script>
+    "use strict";
+    (function () {
+        /* ---------- Safety: unregister any stray service workers & purge foreign caches ----------
+           Lesson from SHOMER: GitHub Pages org projects share one origin; a stale SW on another
+           project's scope can hijack pages. J8NIX ships no SW, so we proactively clear them. */
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function (regs) {
+                regs.forEach(function (r) { r.unregister(); });
+            }).catch(function(){});
+        }
+        if (window.caches && caches.keys) {
+            caches.keys().then(function (keys) {
+                keys.forEach(function (k) { if (!/^j8nix-own/.test(k)) caches.delete(k); });
+            }).catch(function(){});
+        }
+
+        /* ---------- Utilities ---------- */
+        var $ = function (sel, root) { return (root || document).querySelector(sel); };
+        var STORE_KEY = 'j8nix_state_v1';
+        var STATUS_CYCLE = {
+            task: [
+                { label: 'New',         bg: '#eef3f8', fg: '#586475' },
+                { label: 'In Progress', bg: '#f2c194', fg: '#5a3d1e' },
+                { label: 'Blocked',     bg: '#e16a66', fg: '#ffffff' },
+                { label: 'Done',        bg: '#7bb48b', fg: '#ffffff' }
+            ],
+            project: [
+                { label: 'Active',   bg: '#7bb48b', fg: '#ffffff' },
+                { label: 'On Hold',  bg: '#f2c194', fg: '#5a3d1e' },
+                { label: 'At Risk',  bg: '#e16a66', fg: '#ffffff' },
+                { label: 'Archived', bg: '#eef3f8', fg: '#586475' }
+            ]
+        };
+
+        function todayISO() { return new Date().toISOString().slice(0, 10); }
+
+        function defaultState() {
+            return {
+                settings: {
+                    userName: 'Dave Markovich',
+                    org: '3Shamrocks Studio',
+                    voiceEnabled: true,
+                    notifications: false,
+                    driveMode: true,
+                    onboarded: false
+                },
+                tasks: [
+                    { id: 1, project: 'J8NIX UI polish',        created: '2026-06-10', deadline: 'Today',    who: 'Dave',  status: 'In Progress', more: 'Final pass' },
+                    { id: 2, project: 'SHOMER deploy QA',        created: '2026-06-11', deadline: 'Today',    who: 'Dave',  status: 'Done',        more: 'Live' },
+                    { id: 3, project: 'Pitch deck export',       created: '2026-06-12', deadline: 'Today',    who: 'Dave',  status: 'Done',        more: 'PDF' },
+                    { id: 4, project: 'Brand kit handoff',       created: '2026-06-12', deadline: 'Today',    who: 'Mara',  status: 'Done',        more: '' },
+                    { id: 5, project: 'Client invoice batch',    created: '2026-06-13', deadline: 'Today',    who: 'Dave',  status: 'Done',        more: '' },
+                    { id: 6, project: 'Website hero animation',  created: '2026-06-13', deadline: 'Tomorrow', who: 'Lee',   status: 'Done',        more: '' },
+                    { id: 7, project: 'J8NIX repo + Pages',      created: '2026-06-14', deadline: 'Today',    who: 'Dave',  status: 'In Progress', more: 'Shipping' },
+                    { id: 8, project: 'Voice assistant tuning',  created: '2026-06-14', deadline: 'Fri',      who: 'Dave',  status: 'New',         more: '' },
+                    { id: 9, project: 'Quarterly ops review',    created: '2026-06-15', deadline: 'Mon',      who: 'Team',  status: 'New',         more: '' }
+                ],
+                projects: [
+                    { id: 1, client: 'Internal',     project: 'Trashure-Hunters MVP', deadline: 'Q3 2026', who: 'Dave', status: 'Active' },
+                    { id: 2, client: 'Internal',     project: 'SHOMER / Shomergency', deadline: 'Q3 2026', who: 'Dave', status: 'Active' },
+                    { id: 3, client: '3Shamrocks',   project: 'Studio website redesign', deadline: 'Q3 2026', who: 'Lee', status: 'Active' },
+                    { id: 4, client: 'Acme Co.',     project: 'Brand identity system', deadline: 'Aug 2026', who: 'Mara', status: 'On Hold' },
+                    { id: 5, client: 'Northstar',    project: 'Campaign microsite',    deadline: 'Sep 2026', who: 'Team', status: 'At Risk' }
+                ],
+                chat: []
+            };
+        }
+
+        var state;
+        try {
+            state = JSON.parse(localStorage.getItem(STORE_KEY)) || defaultState();
+            if (!state.tasks || !state.settings) state = defaultState();
+        } catch (e) { state = defaultState(); }
+
+        var saveTimer;
+        function save() {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(function () {
+                try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+                catch (e) { toast('Could not save (storage full or blocked).', 'urgent'); }
+            }, 120);
+        }
+
+        /* ---------- Toasts / notifications ---------- */
+        function toast(msg, kind) {
+            var t = document.createElement('div');
+            t.className = 'toast' + (kind ? ' ' + kind : '');
+            t.textContent = msg; // textContent => no injection
+            $('#toastStack').appendChild(t);
+            setTimeout(function () { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; }, 3200);
+            setTimeout(function () { t.remove(); }, 3600);
+            if (state.settings.notifications && 'Notification' in window && Notification.permission === 'granted') {
+                try { new Notification('J8NIX', { body: msg, icon: 'J8NIX_LOGO.png' }); } catch (e) {}
+            }
+        }
+
+        /* ---------- Status pill ---------- */
+        function makePill(kind, value, onChange) {
+            var cycle = STATUS_CYCLE[kind];
+            var idx = Math.max(0, cycle.findIndex(function (s) { return s.label === value; }));
+            var btn = document.createElement('button');
+            btn.className = 'status-pill';
+            btn.setAttribute('aria-label', 'Status: ' + cycle[idx].label + '. Click to change.');
+            function paint() {
+                var s = cycle[idx];
+                btn.textContent = s.label;
+                btn.style.background = s.bg;
+                btn.style.color = s.fg;
+            }
+            paint();
+            btn.addEventListener('click', function () {
+                idx = (idx + 1) % cycle.length;
+                paint();
+                onChange(cycle[idx].label);
+            });
+            return btn;
+        }
+
+        /* ---------- Editable cell ---------- */
+        function editableCell(value, onCommit) {
+            var td = document.createElement('td');
+            td.contentEditable = 'true';
+            td.spellcheck = false;
+            td.textContent = value == null ? '' : String(value);
+            function commit() { onCommit(td.textContent.trim()); }
+            td.addEventListener('blur', commit);
+            td.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); td.blur(); }
+                if (e.key === 'Escape') { td.textContent = value == null ? '' : String(value); td.blur(); }
+            });
+            return td;
+        }
+
+        function delButton(onDel) {
+            var td = document.createElement('td');
+            td.className = 'row-actions';
+            var b = document.createElement('button');
+            b.className = 'icon-btn';
+            b.title = 'Delete row';
+            b.setAttribute('aria-label', 'Delete row');
+            b.textContent = '🗑';
+            b.addEventListener('click', onDel);
+            td.appendChild(b);
+            return td;
+        }
+
+        /* ---------- Render tasks ---------- */
+        function renderTasks() {
+            var tb = $('#tasksTable tbody');
+            tb.textContent = '';
+            state.tasks.forEach(function (t, i) {
+                var tr = document.createElement('tr');
+                var num = document.createElement('td'); num.textContent = String(i + 1); tr.appendChild(num);
+                tr.appendChild(editableCell(t.project,  function (v) { t.project = v; save(); }));
+                tr.appendChild(editableCell(t.created,  function (v) { t.created = v; save(); }));
+                tr.appendChild(editableCell(t.deadline, function (v) { t.deadline = v; save(); }));
+                tr.appendChild(editableCell(t.who,      function (v) { t.who = v; save(); }));
+                var statusTd = document.createElement('td');
+                statusTd.appendChild(makePill('task', t.status, function (label) { t.status = label; save(); updateProgress(); updateStats(); }));
+                tr.appendChild(statusTd);
+                tr.appendChild(editableCell(t.more, function (v) { t.more = v; save(); }));
+                tr.appendChild(delButton(function () {
+                    state.tasks.splice(i, 1); save(); renderTasks(); updateProgress(); updateStats(); renderCalendar();
+                    toast('Task deleted.');
+                }));
+                tb.appendChild(tr);
+            });
+        }
+
+        /* ---------- Render projects ---------- */
+        function renderProjects() {
+            var tb = $('#projectsTable tbody');
+            tb.textContent = '';
+            state.projects.forEach(function (p, i) {
+                var tr = document.createElement('tr');
+                var num = document.createElement('td'); num.textContent = String(i + 1); tr.appendChild(num);
+                tr.appendChild(editableCell(p.client,   function (v) { p.client = v; save(); }));
+                tr.appendChild(editableCell(p.project,  function (v) { p.project = v; save(); }));
+                tr.appendChild(editableCell(p.deadline, function (v) { p.deadline = v; save(); }));
+                tr.appendChild(editableCell(p.who,      function (v) { p.who = v; save(); }));
+                var statusTd = document.createElement('td');
+                statusTd.appendChild(makePill('project', p.status, function (label) { p.status = label; save(); }));
+                tr.appendChild(statusTd);
+                tr.appendChild(delButton(function () {
+                    state.projects.splice(i, 1); save(); renderProjects(); updateStats();
+                    toast('Project deleted.');
+                }));
+                tb.appendChild(tr);
+            });
+        }
+
+        function nextId(arr) { return arr.reduce(function (m, x) { return Math.max(m, x.id || 0); }, 0) + 1; }
+
+        function addTask() {
+            state.tasks.push({ id: nextId(state.tasks), project: 'New task', created: todayISO(), deadline: 'Today', who: state.settings.userName.split(' ')[0] || 'Me', status: 'New', more: '' });
+            save(); renderTasks(); updateProgress(); updateStats();
+            var rows = $('#tasksTable tbody').children;
+            if (rows.length) rows[rows.length - 1].children[1].focus();
+        }
+        function addProject() {
+            state.projects.push({ id: nextId(state.projects), client: 'New client', project: 'New project', deadline: 'TBD', who: 'Team', status: 'Active' });
+            save(); renderProjects(); updateStats();
+            var rows = $('#projectsTable tbody').children;
+            if (rows.length) rows[rows.length - 1].children[1].focus();
+        }
+
+        /* ---------- Progress ring (remaining/total) ---------- */
+        var ARC = 2 * Math.PI * 52; // ~326.7
+        function updateProgress() {
+            var total = state.tasks.length;
+            var done = state.tasks.filter(function (t) { return t.status === 'Done'; }).length;
+            var left = total - done;
+            $('#progressFraction').textContent = left + '/' + total;
+            var frac = total ? done / total : 0;
+            $('#progressArc').style.strokeDashoffset = String(ARC * (1 - frac));
+            $('#progressArc').setAttribute('aria-valuenow', String(done));
+        }
+
+        function updateStats() {
+            var clients = {};
+            state.projects.forEach(function (p) { if (p.client) clients[p.client.toLowerCase()] = 1; });
+            $('#statClients').textContent = String(Object.keys(clients).length);
+            $('#statProjects').textContent = String(state.projects.length);
+            $('#statTasks').textContent = String(state.tasks.length);
+        }
+
+        /* ---------- Calendar ---------- */
+        var calRef = new Date();
+        function renderCalendar() {
+            var y = calRef.getFullYear(), m = calRef.getMonth();
+            var first = new Date(y, m, 1);
+            var startDow = first.getDay();
+            var days = new Date(y, m + 1, 0).getDate();
+            var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            $('#calTitle').textContent = months[m] + ' ' + y;
+            var grid = $('#calGrid'); grid.textContent = '';
+            ['S','M','T','W','T','F','S'].forEach(function (d) {
+                var c = document.createElement('div'); c.className = 'dow'; c.textContent = d; grid.appendChild(c);
+            });
+            var now = new Date();
+            for (var i = 0; i < startDow; i++) { var e = document.createElement('div'); e.className = 'cal-cell empty'; grid.appendChild(e); }
+            // mark days that have a task deadline matching this month (by ISO date in created/deadline)
+            for (var d = 1; d <= days; d++) {
+                var cell = document.createElement('div');
+                cell.className = 'cal-cell';
+                cell.setAttribute('role', 'gridcell');
+                cell.textContent = String(d);
+                if (y === now.getFullYear() && m === now.getMonth() && d === now.getDate()) cell.classList.add('today');
+                var iso = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                if (state.tasks.some(function (t) { return t.created === iso || t.deadline === iso; })) cell.classList.add('has-task');
+                grid.appendChild(cell);
+            }
+        }
+
+        /* ---------- Chat ---------- */
+        function appendMessage(role, opts) {
+            opts = opts || {};
+            var feed = $('#chatFeed');
+            var div = document.createElement('div');
+            div.className = 'message ' + (role === 'user' ? 'user' : 'system');
+            if (opts.text) {
+                var span = document.createElement('span');
+                span.textContent = opts.text; // sanitized via textContent
+                div.appendChild(span);
+            }
+            if (opts.audioURL) {
+                var audio = document.createElement('audio');
+                audio.controls = true; audio.src = opts.audioURL;
+                div.appendChild(audio);
+            }
+            if (opts.fileName) {
+                var chip = document.createElement('div');
+                chip.className = 'file-chip';
+                chip.textContent = '📎 ' + opts.fileName + (opts.fileSize ? '  (' + opts.fileSize + ')' : '');
+                div.appendChild(chip);
+                if (opts.imageURL) {
+                    var img = document.createElement('img');
+                    img.src = opts.imageURL; img.alt = opts.fileName;
+                    img.style.maxWidth = '200px'; img.style.borderRadius = '10px'; img.style.marginTop = '6px';
+                    div.appendChild(img);
+                }
+            }
+            var meta = document.createElement('div');
+            meta.className = 'meta';
+            meta.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            div.appendChild(meta);
+            feed.appendChild(div);
+            feed.scrollTop = feed.scrollHeight;
+            // persist text-only history (skip blob URLs which don't survive reload)
+            if (opts.text && !opts.transient) {
+                state.chat.push({ role: role, text: opts.text, t: Date.now() });
+                if (state.chat.length > 100) state.chat.shift();
+                save();
+            }
+        }
+
+        function assistantReply(userText) {
+            var lower = (userText || '').toLowerCase();
+            var reply;
+            if (/\bnew task\b|add task/.test(lower)) { addTask(); reply = 'Added a new task to today’s list.'; }
+            else if (/\bnew project\b|add project/.test(lower)) { addProject(); reply = 'Created a new project row for you.'; }
+            else if (/progress|how many|tasks left/.test(lower)) {
+                var left = state.tasks.length - state.tasks.filter(function (t){return t.status==='Done';}).length;
+                reply = 'You have ' + left + ' of ' + state.tasks.length + ' tasks remaining today.';
+            }
+            else if (/hello|hey|hi\b/.test(lower)) { reply = 'Hey ' + (state.settings.userName.split(' ')[0] || 'there') + ' — ready when you are.'; }
+            else { reply = 'Understood. I’ve logged that and I’m on it.'; }
+            appendMessage('system', { text: reply });
+            if (state.settings.voiceEnabled) speak(reply);
+            return reply;
+        }
+
+        function sendMessage() {
+            var input = $('#chatInput');
+            var msg = input.value.trim();
+            if (!msg) return;
+            appendMessage('user', { text: msg });
+            input.value = '';
+            setTimeout(function () { assistantReply(msg); }, 450);
+        }
+
+        /* ---------- Text-to-speech (warm female voice preferred) ---------- */
+        var chosenVoice = null;
+        function pickVoice() {
+            if (!('speechSynthesis' in window)) return;
+            var voices = speechSynthesis.getVoices();
+            if (!voices.length) return;
+            var prefer = ['samantha', 'victoria', 'karen', 'serena', 'moira', 'tessa', 'fiona', 'google uk english female', 'zira', 'female'];
+            for (var i = 0; i < prefer.length && !chosenVoice; i++) {
+                chosenVoice = voices.find(function (v) { return v.name.toLowerCase().indexOf(prefer[i]) !== -1; });
+            }
+            if (!chosenVoice) chosenVoice = voices.find(function (v) { return /en[-_]/i.test(v.lang); }) || voices[0];
+        }
+        function speak(text) {
+            if (!('speechSynthesis' in window)) return;
+            try {
+                speechSynthesis.cancel();
+                var u = new SpeechSynthesisUtterance(text);
+                if (!chosenVoice) pickVoice();
+                if (chosenVoice) u.voice = chosenVoice;
+                u.pitch = 1.08; u.rate = 1.03; u.volume = 1;
+                speechSynthesis.speak(u);
+            } catch (e) {}
+        }
+        if ('speechSynthesis' in window) {
+            speechSynthesis.onvoiceschanged = pickVoice;
+            pickVoice();
+        }
+
+        /* ---------- Voice memo (MediaRecorder) ---------- */
+        var mediaRecorder = null, chunks = [], recording = false;
+        function toggleRecord() {
+            if (!navigator.mediaDevices || !window.MediaRecorder) {
+                toast('Voice recording not supported in this browser.', 'urgent'); return;
+            }
+            if (recording) { mediaRecorder.stop(); return; }
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+                chunks = [];
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = function (e) { if (e.data.size) chunks.push(e.data); };
+                mediaRecorder.onstop = function () {
+                    var blob = new Blob(chunks, { type: 'audio/webm' });
+                    var url = URL.createObjectURL(blob);
+                    appendMessage('user', { fileName: 'Voice memo', audioURL: url, transient: true });
+                    stream.getTracks().forEach(function (t) { t.stop(); });
+                    recording = false;
+                    var b = $('#recBtn'); b.textContent = '🎤 Record'; b.classList.remove('listening');
+                    toast('Voice memo saved to chat.', 'success');
+                };
+                mediaRecorder.start();
+                recording = true;
+                var b = $('#recBtn'); b.innerHTML = '<span class="rec-dot"></span>Stop'; b.classList.add('listening');
+            }).catch(function () { toast('Microphone permission denied.', 'urgent'); });
+        }
+
+        /* ---------- Wake-word / speech recognition ("Hey J8NIX") ---------- */
+        var recognition = null, wakeOn = false;
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        function toggleWake() {
+            if (!SR) { toast('Speech recognition not supported in this browser.', 'urgent'); return; }
+            var btn = $('#wakeBtn');
+            if (wakeOn) {
+                wakeOn = false; if (recognition) recognition.stop();
+                btn.textContent = '🛜 Wake word: off'; btn.setAttribute('aria-pressed', 'false'); btn.classList.remove('listening');
+                $('#voiceState').textContent = '';
+                return;
+            }
+            recognition = new SR();
+            recognition.continuous = true; recognition.interimResults = false; recognition.lang = 'en-US';
+            recognition.onresult = function (e) {
+                var transcript = '';
+                for (var i = e.resultIndex; i < e.results.length; i++) transcript += e.results[i][0].transcript;
+                transcript = transcript.trim();
+                if (/hey,?\s*j[\s-]*8?\s*nix|hey jay nix|hey janux/i.test(transcript)) {
+                    var cmd = transcript.replace(/.*?(hey,?\s*j[\s-]*8?\s*nix|hey jay nix|hey janux)/i, '').trim();
+                    $('#voiceState').textContent = '• heard you';
+                    if (cmd) { appendMessage('user', { text: cmd }); assistantReply(cmd); }
+                    else { appendMessage('system', { text: 'Yes ' + (state.settings.userName.split(' ')[0]||'') + '? I’m listening.' }); speak('Yes? I’m listening.'); }
+                }
+            };
+            recognition.onerror = function (ev) {
+                if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
+                    toast('Microphone blocked — wake word off.', 'urgent'); toggleWake();
+                }
+            };
+            recognition.onend = function () { if (wakeOn) { try { recognition.start(); } catch (e) {} } };
+            try {
+                recognition.start();
+                wakeOn = true;
+                btn.textContent = '🛜 Wake word: on'; btn.setAttribute('aria-pressed', 'true'); btn.classList.add('listening');
+                $('#voiceState').textContent = '• say “Hey J8NIX”';
+                toast('Listening for “Hey J8NIX”.', 'success');
+            } catch (e) { toast('Could not start listening.', 'urgent'); }
+        }
+
+        /* ---------- File drag & drop to chat ---------- */
+        function bytes(n) {
+            if (n < 1024) return n + ' B';
+            if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+            return (n / 1048576).toFixed(1) + ' MB';
+        }
+        function handleFiles(files) {
+            Array.prototype.forEach.call(files, function (f) {
+                var opts = { fileName: f.name, fileSize: bytes(f.size), transient: true };
+                if (/^image\//.test(f.type)) opts.imageURL = URL.createObjectURL(f);
+                appendMessage('user', opts);
+            });
+            toast(files.length + ' file' + (files.length > 1 ? 's' : '') + ' attached.', 'success');
+            setTimeout(function () { appendMessage('system', { text: 'Got your file' + (files.length > 1 ? 's' : '') + ' — I’ll reference ' + (files.length > 1 ? 'them' : 'it') + ' for this project.' }); }, 500);
+        }
+        (function setupDnD() {
+            var feed = $('#chatFeed');
+            ['dragenter', 'dragover'].forEach(function (ev) {
+                feed.addEventListener(ev, function (e) { e.preventDefault(); feed.classList.add('dragover'); });
+            });
+            ['dragleave', 'drop'].forEach(function (ev) {
+                feed.addEventListener(ev, function (e) { e.preventDefault(); feed.classList.remove('dragover'); });
+            });
+            feed.addEventListener('drop', function (e) { if (e.dataTransfer && e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
+        })();
+
+        /* ---------- Drive mode + geolocation speed ---------- */
+        var geoWatch = null;
+        function startDriveDetection() {
+            var badge = $('#driveBadge');
+            if (!state.settings.driveMode || !('geolocation' in navigator)) { badge.hidden = true; return; }
+            badge.hidden = false;
+            geoWatch = navigator.geolocation.watchPosition(function (pos) {
+                var speed = pos.coords.speed; // m/s or null
+                if (speed == null) { $('#driveLabel').textContent = 'Stationary'; badge.classList.remove('drive-on'); $('#speedLine').textContent = ''; return; }
+                var kmh = speed * 3.6;
+                $('#speedLine').textContent = kmh > 1 ? Math.round(kmh) + ' km/h' : '';
+                if (kmh > 8) {
+                    badge.classList.add('drive-on'); $('#driveLabel').textContent = 'Drive mode';
+                    if (!badge.dataset.announced) { badge.dataset.announced = '1'; toast('Drive mode on — voice-first, big touch targets.', 'success'); }
+                } else {
+                    badge.classList.remove('drive-on'); $('#driveLabel').textContent = 'Stationary'; delete badge.dataset.announced;
+                }
+            }, function () { $('#driveLabel').textContent = 'Location off'; }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 });
+        }
+        function stopDriveDetection() {
+            if (geoWatch != null) { navigator.geolocation.clearWatch(geoWatch); geoWatch = null; }
+            $('#driveBadge').hidden = true; $('#speedLine').textContent = '';
+        }
+
+        /* ---------- Clock ---------- */
+        function tickClock() {
+            $('#clockLabel').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        /* ---------- Modal (settings + onboarding) ---------- */
+        var modal = $('#modalOverlay'), lastFocus = null;
+        function openModal(title, bodyNodes, footNodes) {
+            $('#modalTitle').textContent = title;
+            var body = $('#modalBody'); body.textContent = '';
+            bodyNodes.forEach(function (n) { body.appendChild(n); });
+            var foot = $('#modalFoot'); foot.textContent = '';
+            footNodes.forEach(function (n) { foot.appendChild(n); });
+            lastFocus = document.activeElement;
+            modal.classList.add('open');
+            var f = modal.querySelector('button, input, select'); if (f) f.focus();
+        }
+        function closeModal() { modal.classList.remove('open'); if (lastFocus) lastFocus.focus(); }
+
+        function field(labelText, inputEl) {
+            var wrap = document.createElement('div'); wrap.className = 'field';
+            var lbl = document.createElement('label'); lbl.textContent = labelText;
+            var id = 'f_' + Math.abs(labelText.split('').reduce(function(a,c){return a*31+c.charCodeAt(0)|0;},7));
+            lbl.setAttribute('for', id); inputEl.id = id;
+            wrap.appendChild(lbl); wrap.appendChild(inputEl); return wrap;
+        }
+        function toggleRow(labelText, checked, onChange) {
+            var row = document.createElement('div'); row.className = 'switch-row';
+            var span = document.createElement('span'); span.textContent = labelText; span.style.fontWeight = '600';
+            var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!checked;
+            cb.style.width = '20px'; cb.style.height = '20px';
+            cb.addEventListener('change', function () { onChange(cb.checked); });
+            row.appendChild(span); row.appendChild(cb); return row;
+        }
+        function btn(label, cls, onClick) {
+            var b = document.createElement('button'); b.className = cls; b.textContent = label;
+            b.addEventListener('click', onClick); return b;
+        }
+
+        function openSettings() {
+            var nameIn = document.createElement('input'); nameIn.type = 'text'; nameIn.value = state.settings.userName;
+            var orgIn = document.createElement('input'); orgIn.type = 'text'; orgIn.value = state.settings.org;
+            var body = [
+                field('Your name', nameIn),
+                field('Organization', orgIn),
+                toggleRow('Voice replies (text-to-speech)', state.settings.voiceEnabled, function (v) { state.settings.voiceEnabled = v; save(); }),
+                toggleRow('Desktop notifications', state.settings.notifications, function (v) {
+                    state.settings.notifications = v; save();
+                    if (v && 'Notification' in window && Notification.permission !== 'granted') Notification.requestPermission();
+                }),
+                toggleRow('Drive mode (geolocation speed)', state.settings.driveMode, function (v) {
+                    state.settings.driveMode = v; save(); if (v) startDriveDetection(); else stopDriveDetection();
+                })
+            ];
+            var foot = [
+                btn('Reset data', 'ghost', function () {
+                    if (confirm('Reset all tasks, projects and settings to defaults?')) {
+                        localStorage.removeItem(STORE_KEY); location.reload();
+                    }
+                }),
+                btn('Save', 'primary', function () {
+                    state.settings.userName = nameIn.value.trim() || 'User';
+                    state.settings.org = orgIn.value.trim();
+                    $('#userInfo').textContent = state.settings.userName + ' • ' + state.settings.org;
+                    save(); closeModal(); toast('Settings saved.', 'success');
+                })
+            ];
+            openModal('Settings', body, foot);
+        }
+
+        function runOnboarding() {
+            var logo = document.createElement('img'); logo.src = 'J8NIX_LOGO.png'; logo.alt = 'J8NIX';
+            var wrap = document.createElement('div'); wrap.className = 'onboard-step';
+            wrap.appendChild(logo);
+            var h = document.createElement('p'); h.innerHTML = '';
+            h.textContent = 'Welcome to J8NIX — your Smart Operations OS. Edit any table cell, click status pills to advance them, drop files into chat, and say “Hey J8NIX” to talk hands-free.';
+            wrap.appendChild(h);
+            var nameIn = document.createElement('input'); nameIn.type = 'text'; nameIn.value = state.settings.userName; nameIn.placeholder = 'Your name';
+            var foot = [ btn('Get started', 'primary', function () {
+                state.settings.userName = nameIn.value.trim() || 'Dave Markovich';
+                state.settings.onboarded = true;
+                $('#userInfo').textContent = state.settings.userName + ' • ' + state.settings.org;
+                save(); closeModal(); toast('You’re all set. Welcome aboard!', 'success');
+            }) ];
+            openModal('Welcome 👋', [wrap, field('Your name', nameIn)], foot);
+        }
+
+        /* ---------- Quick actions ---------- */
+        function quickAction(kind) {
+            switch (kind) {
+                case 'newProject': addProject(); toast('New project added.', 'success'); break;
+                case 'newTask': addTask(); toast('New task added.', 'success'); break;
+                case 'memo': toggleRecord(); break;
+                case 'reminder':
+                    var what = prompt('Remind you about what?');
+                    if (what) { state.tasks.push({ id: nextId(state.tasks), project: '⏰ ' + what, created: todayISO(), deadline: 'Today', who: state.settings.userName.split(' ')[0], status: 'New', more: 'reminder' }); save(); renderTasks(); updateProgress(); updateStats(); toast('Reminder set.', 'success'); }
+                    break;
+                case 'audit':
+                    var atRisk = state.projects.filter(function (p){return p.status==='At Risk';}).length;
+                    var blocked = state.tasks.filter(function (t){return t.status==='Blocked';}).length;
+                    appendMessage('system', { text: 'Audit: ' + state.projects.length + ' projects (' + atRisk + ' at risk), ' + state.tasks.length + ' tasks (' + blocked + ' blocked).' });
+                    if (state.settings.voiceEnabled) speak('Audit complete. ' + atRisk + ' projects at risk, ' + blocked + ' tasks blocked.');
+                    toast('Project audit complete.', 'success');
+                    break;
+            }
+        }
+
+        /* ---------- Wire up events ---------- */
+        $('#addTaskBtn').addEventListener('click', addTask);
+        $('#addProjectBtn').addEventListener('click', addProject);
+        $('#sendBtn').addEventListener('click', sendMessage);
+        $('#chatInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') sendMessage(); });
+        $('#recBtn').addEventListener('click', toggleRecord);
+        $('#speakBtn').addEventListener('click', function () {
+            var msgs = $('#chatFeed').querySelectorAll('.message.system span');
+            if (msgs.length) speak(msgs[msgs.length - 1].textContent);
+            else speak('Hello ' + (state.settings.userName.split(' ')[0]||'') + ', J8NIX is ready.');
+        });
+        $('#wakeBtn').addEventListener('click', toggleWake);
+        $('#settingsBtn').addEventListener('click', openSettings);
+        var sbm = $('#settingsBtnMobile'); if (sbm) sbm.addEventListener('click', openSettings);
+        $('#modalClose').addEventListener('click', closeModal);
+        modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && modal.classList.contains('open')) closeModal(); });
+        $('#calPrev').addEventListener('click', function () { calRef.setMonth(calRef.getMonth() - 1); renderCalendar(); });
+        $('#calNext').addEventListener('click', function () { calRef.setMonth(calRef.getMonth() + 1); renderCalendar(); });
+        Array.prototype.forEach.call(document.querySelectorAll('[data-qa]'), function (b) {
+            b.addEventListener('click', function () { quickAction(b.getAttribute('data-qa')); });
+        });
+
+        /* ---------- Init ---------- */
+        $('#userInfo').textContent = state.settings.userName + ' • ' + state.settings.org;
+        renderTasks(); renderProjects(); updateProgress(); updateStats(); renderCalendar();
+        // restore chat history (text only)
+        if (state.chat && state.chat.length) {
+            state.chat.slice(-30).forEach(function (m) {
+                var div = document.createElement('div');
+                div.className = 'message ' + (m.role === 'user' ? 'user' : 'system');
+                var span = document.createElement('span'); span.textContent = m.text; div.appendChild(span);
+                $('#chatFeed').appendChild(div);
+            });
+        } else {
+            appendMessage('system', { text: 'Welcome back, ' + (state.settings.userName.split(' ')[0]||'Dave') + '. How can I make your operations smarter today?', transient: true });
+        }
+        tickClock(); setInterval(tickClock, 30000);
+        if (state.settings.driveMode) startDriveDetection();
+        if (!state.settings.onboarded) setTimeout(runOnboarding, 500);
+
+        // expose minimal debug hook (no eval, read-only)
+        window.J8NIX = { version: '1.0.0', reset: function () { localStorage.removeItem(STORE_KEY); location.reload(); } };
+    })();
+    </script>
+</body>
+</html>
