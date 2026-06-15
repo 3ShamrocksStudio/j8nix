@@ -51,4 +51,4 @@ add a `CNAME` file containing that hostname, point a DNS `CNAME` record at
 
 ## License
 
-© 3Shamrocks Studio. All rights reserved.
+© 2026 3Shamrocks Studio. All rights reserved. **J8NIX™** is a trademark of 3Shamrocks Studio.

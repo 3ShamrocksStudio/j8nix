@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#ccd8e5">
     <!-- CSP: no eval, no remote script. Allow inline styles/scripts (single-file app) + Google Fonts + data/blob media. -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-    <title>J8NIX — Smart Operations OS, Only Smarter</title>
+    <title>J8NIX™ — Smart Operations OS, Only Smarter</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -222,6 +222,27 @@
         .toast.urgent { background: var(--urgent); }
         @keyframes slidein { from{transform: translateY(12px); opacity:0} to{transform:none; opacity:1} }
 
+        /* Brand trademark mark */
+        .brand .tm { font-size: 11px; font-weight: 800; color: var(--accent-deep); align-self: flex-start; margin: 2px 0 0 -8px; }
+
+        /* Persistent footer / copyright credit */
+        .site-footer {
+            margin: 4px 16px 16px; padding: 16px 20px; gap: 14px;
+            display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
+            text-align: center; border-top: 1px solid var(--border);
+            color: var(--neutral); font-size: 12px; line-height: 1.5;
+        }
+        .site-footer img { height: 22px; width: auto; display: block; opacity: .92; }
+        .site-footer .copy strong { color: var(--text); }
+        .site-footer .copy .tm { color: var(--accent-deep); font-weight: 800; }
+        .about-box {
+            margin-top: 8px; padding: 14px 16px; border: 1px solid var(--border);
+            border-radius: 12px; background: #f8fafd; text-align: center;
+        }
+        .about-box img { height: 24px; width: auto; opacity: .92; margin-bottom: 8px; }
+        .about-box .copy { font-size: 12px; color: var(--neutral); font-weight: 600; }
+        .about-box .copy .tm { color: var(--accent-deep); font-weight: 800; }
+
         /* Mobile action bar */
         .mobile-bar { display: none; }
 
@@ -235,7 +256,8 @@
             .logo { height: 32px; }
             .user-info { display: none; }
             .workspace { padding: 12px; gap: 12px; }
-            .chat-area { margin: 0 12px 80px; }
+            .chat-area { margin: 0 12px 12px; }
+            .site-footer { margin: 0 12px 76px; }
             .mobile-bar {
                 display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;
                 background: #fff; border-top: 1px solid var(--border); padding: 8px;
@@ -251,7 +273,8 @@
 
     <header>
         <div class="brand">
-            <img src="J8NIX_notag.png" alt="J8NIX" class="logo" onerror="this.onerror=null;this.src='J8NIX_LOGO.png'">
+            <img src="J8NIX_notag.png" alt="J8NIX™" class="logo" onerror="this.onerror=null;this.src='J8NIX_LOGO.png'">
+            <span class="tm" aria-hidden="true">™</span>
             <img src="J8NIX_tagline.png" alt="Smart Operations OS, Only Smarter" class="tagline-img"
                  onerror="this.style.display='none';document.getElementById('taglineFallback').style.display='block'">
             <span id="taglineFallback" class="tagline-text" style="display:none">Smart Operations OS, Only Smarter</span>
@@ -352,7 +375,7 @@
     <!-- BOTTOM: Chat -->
     <section class="panel chat-area" aria-label="J8NIX assistant chat">
         <div class="panel-header">
-            <span>J8NIX Chat • Smart Assistant <span id="voiceState" style="font-weight:600;text-transform:none;color:var(--secondary)"></span></span>
+            <span>J8NIX™ Chat • Smart Assistant <span id="voiceState" style="font-weight:600;text-transform:none;color:var(--secondary)"></span></span>
             <button class="ghost" id="wakeBtn" aria-pressed="false" title="Toggle wake-word listening">🛜 Wake word: off</button>
         </div>
         <div id="chatFeed" class="chat-feed" aria-live="polite" aria-label="Conversation"></div>
@@ -363,6 +386,12 @@
             <button class="primary" id="speakBtn" title="Speak last reply">🔊 Speak</button>
         </div>
     </section>
+
+    <!-- Persistent copyright / branding credit -->
+    <footer class="site-footer">
+        <img src="3shamrocks_black.png" alt="3Shamrocks Studio" onerror="this.style.display='none'">
+        <span class="copy">© 2026 3Shamrocks Studio. All rights reserved. &nbsp;·&nbsp; <strong>J8NIX<span class="tm">™</span></strong> is a product of 3Shamrocks Studio.</span>
+    </footer>
 
     <!-- Mobile action bar -->
     <nav class="mobile-bar" aria-label="Quick actions">
@@ -891,6 +920,24 @@
             b.addEventListener('click', onClick); return b;
         }
 
+        function aboutBox() {
+            var box = document.createElement('div'); box.className = 'about-box';
+            var logo = document.createElement('img'); logo.src = '3shamrocks_black.png'; logo.alt = '3Shamrocks Studio';
+            logo.onerror = function () { this.style.display = 'none'; };
+            var copy = document.createElement('div'); copy.className = 'copy';
+            // Build with a real ™ superscript while keeping text sanitized
+            copy.appendChild(document.createTextNode('© 2026 3Shamrocks Studio. All rights reserved.'));
+            copy.appendChild(document.createElement('br'));
+            var prod = document.createElement('span');
+            prod.appendChild(document.createTextNode('J8NIX'));
+            var tm = document.createElement('span'); tm.className = 'tm'; tm.textContent = '™';
+            prod.appendChild(tm);
+            prod.appendChild(document.createTextNode(' v1.0.0 — a product of 3Shamrocks Studio.'));
+            copy.appendChild(prod);
+            box.appendChild(logo); box.appendChild(copy);
+            return box;
+        }
+
         function openSettings() {
             var nameIn = document.createElement('input'); nameIn.type = 'text'; nameIn.value = state.settings.userName;
             var orgIn = document.createElement('input'); orgIn.type = 'text'; orgIn.value = state.settings.org;
@@ -904,7 +951,8 @@
                 }),
                 toggleRow('Drive mode (geolocation speed)', state.settings.driveMode, function (v) {
                     state.settings.driveMode = v; save(); if (v) startDriveDetection(); else stopDriveDetection();
-                })
+                }),
+                aboutBox()
             ];
             var foot = [
                 btn('Reset data', 'ghost', function () {
