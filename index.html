@@ -6,7 +6,9 @@
     <meta name="description" content="J8NIX — Smart Operations OS. Calendar, tasks, projects, voice assistant and live status in one clean workspace.">
     <meta name="theme-color" content="#ccd8e5">
     <!-- CSP: no eval, no remote script. Allow inline styles/scripts (single-file app) + Google Fonts + data/blob media. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <!-- connect-src includes the Anthropic + OpenAI API hosts so the OPTIONAL, user-key-gated
+         "Refine with AI" path in Prompt Forge can run. No key is ever shipped in this file. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.anthropic.com https://api.openai.com; object-src 'none'; base-uri 'none'; form-action 'none'">
     <title>J8NIX™ — Smart Operations OS, Only Smarter</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
@@ -20,7 +22,7 @@
             --accent: #f2c194;
             --accent-deep: #e0a878;
             --neutral: #586475;
-            --secondary: #6a809b;
+            --secondary: #5f7590;
             --success: #7bb48b;
             --urgent: #e16a66;
             --text: #102a43;
@@ -218,8 +220,8 @@
             background: var(--text); color: #fff; padding: 13px 16px; border-radius: 12px;
             font-size: 13px; box-shadow: 0 10px 30px rgba(16,42,67,.3); animation: slidein .25s ease;
         }
-        .toast.success { background: var(--success); }
-        .toast.urgent { background: var(--urgent); }
+        .toast.success { background: #35804e; }
+        .toast.urgent { background: #c94642; }
         @keyframes slidein { from{transform: translateY(12px); opacity:0} to{transform:none; opacity:1} }
 
         /* Brand trademark mark */
@@ -242,6 +244,53 @@
         .about-box img { height: 24px; width: auto; opacity: .92; margin-bottom: 8px; }
         .about-box .copy { font-size: 12px; color: var(--neutral); font-weight: 600; }
         .about-box .copy .tm { color: var(--accent-deep); font-weight: 800; }
+
+        /* ---------- Prompt Forge ---------- */
+        .modal.wide { max-width: 780px; }
+        .field textarea {
+            width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 10px;
+            font-size: 14px; font-family: inherit; color: var(--text); background: #fff;
+            resize: vertical; min-height: 88px; line-height: 1.5;
+        }
+        .field textarea:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+        .forge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .forge-grid .field { margin-bottom: 0; }
+        .forge-input-wrap { position: relative; }
+        .mic-btn {
+            position: absolute; right: 8px; bottom: 8px; padding: 7px 11px; font-size: 13px;
+            background: #eef3f8; color: var(--neutral); border-radius: 999px;
+        }
+        .mic-btn:hover { background: #e3ebf3; }
+        .mic-btn.listening { background: var(--urgent); color: #fff; }
+        .forge-label {
+            font-size: 11px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase;
+            color: var(--secondary); margin: 16px 0 6px;
+        }
+        .forge-out {
+            width: 100%; min-height: 150px; padding: 13px 15px; border: 1px solid var(--border);
+            border-radius: 10px; font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-size: 12.5px; line-height: 1.55; color: var(--text); background: #f8fafd;
+            resize: vertical; white-space: pre-wrap;
+        }
+        .forge-out:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+        .forge-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 11px 0; }
+        .token-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #eef3f8; color: var(--neutral); font-weight: 800; font-size: 12px;
+            padding: 5px 12px; border-radius: 999px;
+        }
+        .token-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-deep); }
+        .forge-level { font-size: 12px; font-weight: 700; color: var(--secondary); }
+        .forge-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .warn-box {
+            border: 1px solid #f0c9a0; background: #fff7ee; color: #7a4a1e; border-radius: 12px;
+            padding: 12px 14px; font-size: 12.5px; line-height: 1.5; margin-bottom: 14px;
+        }
+        .warn-box strong { color: #5a3d1e; }
+        .forge-note { font-size: 12px; color: var(--neutral); margin: 6px 0 0; }
+        button[disabled] { opacity: .5; cursor: not-allowed; }
+        button[disabled]:active { transform: none; }
+        @media (max-width: 640px) { .forge-grid { grid-template-columns: 1fr; } }
 
         /* Mobile action bar */
         .mobile-bar { display: none; }
@@ -362,6 +411,7 @@
             <section class="panel" aria-label="Quick actions" style="flex:1">
                 <div class="panel-header">Quick Actions</div>
                 <div class="qa-list">
+                    <button class="primary" data-qa="forge">🔥 Prompt Forge</button>
                     <button class="primary" data-qa="newProject">＋ New project</button>
                     <button class="primary" data-qa="newTask">✓ New task</button>
                     <button class="primary" data-qa="reminder">⏰ New reminder</button>
@@ -376,7 +426,10 @@
     <section class="panel chat-area" aria-label="J8NIX assistant chat">
         <div class="panel-header">
             <span>J8NIX™ Chat • Smart Assistant <span id="voiceState" style="font-weight:600;text-transform:none;color:var(--secondary)"></span></span>
-            <button class="ghost" id="wakeBtn" aria-pressed="false" title="Toggle wake-word listening">🛜 Wake word: off</button>
+            <span style="display:flex;gap:8px;align-items:center">
+                <button class="ghost" id="forgeBtn" title="Open Prompt Forge — build a token-efficient prompt">🔥 Prompt Forge</button>
+                <button class="ghost" id="wakeBtn" aria-pressed="false" title="Toggle wake-word listening">🛜 Wake word: off</button>
+            </span>
         </div>
         <div id="chatFeed" class="chat-feed" aria-live="polite" aria-label="Conversation"></div>
         <div class="chat-input-row">
@@ -395,8 +448,8 @@
 
     <!-- Mobile action bar -->
     <nav class="mobile-bar" aria-label="Quick actions">
+        <button class="primary" data-qa="forge">🔥 Forge</button>
         <button class="primary" data-qa="newTask">✓ Task</button>
-        <button class="primary" data-qa="newProject">＋ Project</button>
         <button class="primary" data-qa="memo">🎤 Memo</button>
         <button class="ghost" id="settingsBtnMobile">⚙</button>
     </nav>
@@ -439,13 +492,13 @@
             task: [
                 { label: 'New',         bg: '#eef3f8', fg: '#586475' },
                 { label: 'In Progress', bg: '#f2c194', fg: '#5a3d1e' },
-                { label: 'Blocked',     bg: '#e16a66', fg: '#ffffff' },
-                { label: 'Done',        bg: '#7bb48b', fg: '#ffffff' }
+                { label: 'Blocked',     bg: '#e16a66', fg: '#3d100e' },
+                { label: 'Done',        bg: '#7bb48b', fg: '#12331f' }
             ],
             project: [
-                { label: 'Active',   bg: '#7bb48b', fg: '#ffffff' },
+                { label: 'Active',   bg: '#7bb48b', fg: '#12331f' },
                 { label: 'On Hold',  bg: '#f2c194', fg: '#5a3d1e' },
-                { label: 'At Risk',  bg: '#e16a66', fg: '#ffffff' },
+                { label: 'At Risk',  bg: '#e16a66', fg: '#3d100e' },
                 { label: 'Archived', bg: '#eef3f8', fg: '#586475' }
             ]
         };
@@ -458,9 +511,13 @@
                     userName: 'Dave Markovich',
                     org: '3Shamrocks Studio',
                     voiceEnabled: true,
+                    voiceName: '',          // chosen TTS voice (empty = auto-pick warm female)
                     notifications: false,
                     driveMode: true,
-                    onboarded: false
+                    onboarded: false,
+                    aiProvider: 'anthropic', // optional live-dispatch provider (anthropic | openai)
+                    apiModel: '',            // optional model override
+                    apiKey: ''               // BYO key, stored locally only — see in-app warning + README
                 },
                 tasks: [
                     { id: 1, project: 'J8NIX UI polish',        created: '2026-06-10', deadline: 'Today',    who: 'Dave',  status: 'In Progress', more: 'Final pass' },
@@ -518,12 +575,13 @@
             var idx = Math.max(0, cycle.findIndex(function (s) { return s.label === value; }));
             var btn = document.createElement('button');
             btn.className = 'status-pill';
-            btn.setAttribute('aria-label', 'Status: ' + cycle[idx].label + '. Click to change.');
+            btn.type = 'button';
             function paint() {
                 var s = cycle[idx];
                 btn.textContent = s.label;
                 btn.style.background = s.bg;
                 btn.style.color = s.fg;
+                btn.setAttribute('aria-label', 'Status: ' + s.label + '. Click to change.');
             }
             paint();
             btn.addEventListener('click', function () {
@@ -631,7 +689,9 @@
             $('#progressFraction').textContent = left + '/' + total;
             var frac = total ? done / total : 0;
             $('#progressArc').style.strokeDashoffset = String(ARC * (1 - frac));
-            $('#progressArc').setAttribute('aria-valuenow', String(done));
+            var svg = $('#progressArc').ownerSVGElement;
+            if (svg) svg.setAttribute('aria-label',
+                'Daily progress: ' + done + ' of ' + total + ' tasks complete, ' + left + ' remaining.');
         }
 
         function updateStats() {
@@ -656,18 +716,40 @@
                 var c = document.createElement('div'); c.className = 'dow'; c.textContent = d; grid.appendChild(c);
             });
             var now = new Date();
-            for (var i = 0; i < startDow; i++) { var e = document.createElement('div'); e.className = 'cal-cell empty'; grid.appendChild(e); }
-            // mark days that have a task deadline matching this month (by ISO date in created/deadline)
-            for (var d = 1; d <= days; d++) {
-                var cell = document.createElement('div');
-                cell.className = 'cal-cell';
-                cell.setAttribute('role', 'gridcell');
-                cell.textContent = String(d);
-                if (y === now.getFullYear() && m === now.getMonth() && d === now.getDate()) cell.classList.add('today');
-                var iso = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-                if (state.tasks.some(function (t) { return t.created === iso || t.deadline === iso; })) cell.classList.add('has-task');
-                grid.appendChild(cell);
+            for (var i = 0; i < startDow; i++) { var e = document.createElement('div'); e.className = 'cal-cell empty'; e.setAttribute('aria-hidden', 'true'); grid.appendChild(e); }
+            // build each day cell; mark days with a matching task (ISO in created/deadline) and make them interactive
+            for (var d = 1; d <= days; d++) { grid.appendChild(makeDayCell(y, m, d, months, now)); }
+        }
+        function dayItems(iso) {
+            return state.tasks.filter(function (t) { return t.created === iso || t.deadline === iso; })
+                              .map(function (t) { return t.project; });
+        }
+        function makeDayCell(y, m, d, months, now) {
+            var cell = document.createElement('div');
+            cell.className = 'cal-cell';
+            cell.setAttribute('role', 'gridcell');
+            cell.tabIndex = 0;
+            cell.textContent = String(d);
+            var iso = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+            var items = dayItems(iso);
+            var label = months[m] + ' ' + d + ', ' + y;
+            if (y === now.getFullYear() && m === now.getMonth() && d === now.getDate()) {
+                cell.classList.add('today'); cell.setAttribute('aria-current', 'date'); label += ' (today)';
             }
+            if (items.length) {
+                cell.classList.add('has-task');
+                label += ' — ' + items.length + ' item' + (items.length > 1 ? 's' : '');
+            }
+            cell.setAttribute('aria-label', label);
+            function open() {
+                if (items.length) toast(months[m] + ' ' + d + ': ' + items.join(', '), 'success');
+                else toast('No items on ' + months[m] + ' ' + d + '.');
+            }
+            cell.addEventListener('click', open);
+            cell.addEventListener('keydown', function (ev) {
+                if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); open(); }
+            });
+            return cell;
         }
 
         /* ---------- Chat ---------- */
@@ -715,6 +797,23 @@
         function assistantReply(userText) {
             var lower = (userText || '').toLowerCase();
             var reply;
+            // Prompt Forge intent — open the composer, seeded with the rest of the request.
+            if (/\bforge\b|\b(?:optimi[sz]e|craft|engineer|tighten)\s+(?:a |this |my )?prompt\b/.test(lower)) {
+                // Strip only the trigger phrasing — keep content words like "launch".
+                var seed = userText
+                    .replace(/\b(?:open|launch|start|fire up)\s+(?:the\s+)?(?:prompt\s+)?forge\b/gi, '')
+                    .replace(/\b(?:optimi[sz]e|craft|engineer|tighten)\s+(?:a |this |my )?prompt\b/gi, '')
+                    .replace(/\bprompt\s+forge\b/gi, '')
+                    .replace(/\bforge\b/gi, '')
+                    .replace(/\bplease\b/gi, '')
+                    .replace(/^[\s,.:-]+/, '')
+                    .replace(/\s{2,}/g, ' ').trim();
+                openForge(seed);
+                reply = seed ? 'Opening Prompt Forge with your request.' : 'Opening Prompt Forge.';
+                appendMessage('system', { text: reply });
+                if (state.settings.voiceEnabled) speak(reply);
+                return reply;
+            }
             if (/\bnew task\b|add task/.test(lower)) { addTask(); reply = 'Added a new task to today’s list.'; }
             else if (/\bnew project\b|add project/.test(lower)) { addProject(); reply = 'Created a new project row for you.'; }
             else if (/progress|how many|tasks left/.test(lower)) {
@@ -739,14 +838,23 @@
 
         /* ---------- Text-to-speech (warm female voice preferred) ---------- */
         var chosenVoice = null;
+        function listVoices() {
+            return ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
+        }
         function pickVoice() {
-            if (!('speechSynthesis' in window)) return;
-            var voices = speechSynthesis.getVoices();
+            var voices = listVoices();
             if (!voices.length) return;
+            chosenVoice = null;
+            // 1) explicit user choice from Settings
+            if (state.settings.voiceName) {
+                chosenVoice = voices.find(function (v) { return v.name === state.settings.voiceName; }) || null;
+            }
+            // 2) auto-pick a warm female voice
             var prefer = ['samantha', 'victoria', 'karen', 'serena', 'moira', 'tessa', 'fiona', 'google uk english female', 'zira', 'female'];
             for (var i = 0; i < prefer.length && !chosenVoice; i++) {
-                chosenVoice = voices.find(function (v) { return v.name.toLowerCase().indexOf(prefer[i]) !== -1; });
+                chosenVoice = voices.find(function (v) { return v.name.toLowerCase().indexOf(prefer[i]) !== -1; }) || null;
             }
+            // 3) any English voice, else first available
             if (!chosenVoice) chosenVoice = voices.find(function (v) { return /en[-_]/i.test(v.lang); }) || voices[0];
         }
         function speak(text) {
@@ -888,17 +996,35 @@
 
         /* ---------- Modal (settings + onboarding) ---------- */
         var modal = $('#modalOverlay'), lastFocus = null;
-        function openModal(title, bodyNodes, footNodes) {
+        function openModal(title, bodyNodes, footNodes, wide) {
             $('#modalTitle').textContent = title;
             var body = $('#modalBody'); body.textContent = '';
             bodyNodes.forEach(function (n) { body.appendChild(n); });
             var foot = $('#modalFoot'); foot.textContent = '';
             footNodes.forEach(function (n) { foot.appendChild(n); });
+            var inner = modal.querySelector('.modal');
+            if (inner) inner.classList.toggle('wide', !!wide);
             lastFocus = document.activeElement;
             modal.classList.add('open');
-            var f = modal.querySelector('button, input, select'); if (f) f.focus();
+            document.body.style.overflow = 'hidden';
+            var f = modal.querySelector('button, input, select, textarea'); if (f) f.focus();
         }
-        function closeModal() { modal.classList.remove('open'); if (lastFocus) lastFocus.focus(); }
+        function closeModal() {
+            modal.classList.remove('open');
+            document.body.style.overflow = '';
+            var inner = modal.querySelector('.modal');
+            if (inner) inner.classList.remove('wide');
+            if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+        }
+        // Keep keyboard focus inside the dialog while it is open (WCAG 2.4.3)
+        modal.addEventListener('keydown', function (e) {
+            if (e.key !== 'Tab' || !modal.classList.contains('open')) return;
+            var f = modal.querySelectorAll('button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            if (!f.length) return;
+            var first = f[0], last = f[f.length - 1];
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        });
 
         function field(labelText, inputEl) {
             var wrap = document.createElement('div'); wrap.className = 'field';
@@ -932,7 +1058,7 @@
             prod.appendChild(document.createTextNode('J8NIX'));
             var tm = document.createElement('span'); tm.className = 'tm'; tm.textContent = '™';
             prod.appendChild(tm);
-            prod.appendChild(document.createTextNode(' v1.0.0 — a product of 3Shamrocks Studio.'));
+            prod.appendChild(document.createTextNode(' v1.1.0 — a product of 3Shamrocks Studio.'));
             copy.appendChild(prod);
             box.appendChild(logo); box.appendChild(copy);
             return box;
@@ -941,10 +1067,60 @@
         function openSettings() {
             var nameIn = document.createElement('input'); nameIn.type = 'text'; nameIn.value = state.settings.userName;
             var orgIn = document.createElement('input'); orgIn.type = 'text'; orgIn.value = state.settings.org;
+
+            // Voice picker — populated from the platform's speech-synthesis voices.
+            var voiceSel = document.createElement('select');
+            (function fillVoices() {
+                voiceSel.textContent = '';
+                var auto = document.createElement('option'); auto.value = ''; auto.textContent = 'Auto (warm female)'; voiceSel.appendChild(auto);
+                listVoices().forEach(function (v) {
+                    var op = document.createElement('option');
+                    op.value = v.name; op.textContent = v.name + ' (' + v.lang + ')';
+                    if (v.name === state.settings.voiceName) op.selected = true;
+                    voiceSel.appendChild(op);
+                });
+            })();
+            // Voices can load asynchronously on some browsers.
+            if ('speechSynthesis' in window && !listVoices().length) {
+                speechSynthesis.onvoiceschanged = function () { pickVoice(); };
+            }
+            var voiceTest = btn('🔊 Test', 'ghost', function () {
+                state.settings.voiceName = voiceSel.value; pickVoice();
+                speak('Hi, this is J8NIX. How can I help?');
+            });
+            voiceTest.style.marginTop = '8px';
+
+            // Optional AI dispatch (BYO key).
+            var providerSel = document.createElement('select');
+            [['anthropic', 'Anthropic (Claude)'], ['openai', 'OpenAI']].forEach(function (o) {
+                var op = document.createElement('option'); op.value = o[0]; op.textContent = o[1];
+                if (o[0] === (state.settings.aiProvider || 'anthropic')) op.selected = true;
+                providerSel.appendChild(op);
+            });
+            var modelIn = document.createElement('input'); modelIn.type = 'text';
+            modelIn.placeholder = state.settings.aiProvider === 'openai' ? 'gpt-4o-mini' : 'claude-opus-4-8';
+            modelIn.value = state.settings.apiModel || '';
+            var keyIn = document.createElement('input'); keyIn.type = 'password'; keyIn.autocomplete = 'off';
+            keyIn.placeholder = 'Paste your own API key (optional)';
+            keyIn.value = state.settings.apiKey || '';
+
+            var warn = document.createElement('div'); warn.className = 'warn-box';
+            var wb = document.createElement('strong'); wb.textContent = '⚠ Client-side keys are insecure. ';
+            warn.appendChild(wb);
+            warn.appendChild(document.createTextNode(
+                'A key pasted here is stored only in this browser (localStorage) and is exposed to any script on the page — never use a production or shared key. ' +
+                'The recommended production path is a backend proxy that holds the key server-side. ' +
+                'Leave this blank to use Prompt Forge fully offline (generate + copy).'
+            ));
+
+            var aiHead = document.createElement('div'); aiHead.className = 'forge-label'; aiHead.textContent = 'Optional: live AI refine (advanced)';
+
             var body = [
                 field('Your name', nameIn),
                 field('Organization', orgIn),
                 toggleRow('Voice replies (text-to-speech)', state.settings.voiceEnabled, function (v) { state.settings.voiceEnabled = v; save(); }),
+                field('Assistant voice', voiceSel),
+                voiceTest,
                 toggleRow('Desktop notifications', state.settings.notifications, function (v) {
                     state.settings.notifications = v; save();
                     if (v && 'Notification' in window && Notification.permission !== 'granted') Notification.requestPermission();
@@ -952,8 +1128,16 @@
                 toggleRow('Drive mode (geolocation speed)', state.settings.driveMode, function (v) {
                     state.settings.driveMode = v; save(); if (v) startDriveDetection(); else stopDriveDetection();
                 }),
+                aiHead,
+                warn,
+                field('AI provider', providerSel),
+                field('Model (optional)', modelIn),
+                field('API key (stored locally only)', keyIn),
                 aboutBox()
             ];
+            providerSel.addEventListener('change', function () {
+                modelIn.placeholder = providerSel.value === 'openai' ? 'gpt-4o-mini' : 'claude-opus-4-8';
+            });
             var foot = [
                 btn('Reset data', 'ghost', function () {
                     if (confirm('Reset all tasks, projects and settings to defaults?')) {
@@ -963,8 +1147,14 @@
                 btn('Save', 'primary', function () {
                     state.settings.userName = nameIn.value.trim() || 'User';
                     state.settings.org = orgIn.value.trim();
+                    state.settings.voiceName = voiceSel.value;
+                    state.settings.aiProvider = providerSel.value;
+                    state.settings.apiModel = modelIn.value.trim();
+                    state.settings.apiKey = keyIn.value.trim();
+                    pickVoice();
                     $('#userInfo').textContent = state.settings.userName + ' • ' + state.settings.org;
-                    save(); closeModal(); toast('Settings saved.', 'success');
+                    save(); closeModal();
+                    toast(state.settings.apiKey ? 'Settings saved. Live AI refine enabled (your key, this browser only).' : 'Settings saved.', 'success');
                 })
             ];
             openModal('Settings', body, foot);
@@ -974,8 +1164,8 @@
             var logo = document.createElement('img'); logo.src = 'J8NIX_LOGO.png'; logo.alt = 'J8NIX';
             var wrap = document.createElement('div'); wrap.className = 'onboard-step';
             wrap.appendChild(logo);
-            var h = document.createElement('p'); h.innerHTML = '';
-            h.textContent = 'Welcome to J8NIX — your Smart Operations OS. Edit any table cell, click status pills to advance them, drop files into chat, and say “Hey J8NIX” to talk hands-free.';
+            var h = document.createElement('p');
+            h.textContent = 'Welcome to J8NIX — your Smart Operations OS. Edit any table cell, click status pills to advance them, drop files into chat, open 🔥 Prompt Forge to craft token-efficient AI prompts, and say “Hey J8NIX” to talk hands-free.';
             wrap.appendChild(h);
             var nameIn = document.createElement('input'); nameIn.type = 'text'; nameIn.value = state.settings.userName; nameIn.placeholder = 'Your name';
             var foot = [ btn('Get started', 'primary', function () {
@@ -987,9 +1177,318 @@
             openModal('Welcome 👋', [wrap, field('Your name', nameIn)], foot);
         }
 
+        /* ====================================================================
+           PROMPT FORGE — client-side prompt engineering (offline by default)
+           A local heuristic/template engine turns a plain-language request into
+           a tight, token-efficient, well-structured prompt. No API required.
+           ==================================================================== */
+
+        // ~4 chars/token is the standard rough estimate for English prompts.
+        function estTokens(s) { return Math.max(1, Math.round((s || '').length / 4)); }
+
+        // Progressive filler removal — heavier levels strip more.
+        var FORGE_FILLERS = [
+            [/\bin order to\b/gi, 'to'],
+            [/\b(?:i was wondering if you could|i would like you to|i'd like you to|i want you to|i need you to)\b/gi, ''],
+            [/\b(?:could|would|can) you(?: please)?\b/gi, ''],
+            [/\b(?:please|kindly)\b/gi, ''],
+            [/\b(?:basically|actually|literally|really|very|just|simply|sort of|kind of|you know|i think|i guess|i believe|maybe|perhaps)\b/gi, '']
+        ];
+        function compress(text, level) {
+            var out = text;
+            // Even at Standard (0) strip pure-noise politeness; heavier levels strip more.
+            var n = level <= 0 ? 4 : FORGE_FILLERS.length;
+            for (var i = 0; i < n; i++) out = out.replace(FORGE_FILLERS[i][0], FORGE_FILLERS[i][1]);
+            return out.replace(/\s{2,}/g, ' ').replace(/\s+([,.;:!?])/g, '$1').trim();
+        }
+        // Strip a trailing period so constraints join cleanly with "; ".
+        function joinConstraints(cons) {
+            return cons.map(function (c) { return c.replace(/\.$/, ''); }).join('; ');
+        }
+        function detectRole(t) {
+            // Strongest intent first: code, then verb-driven intents, then content nouns last.
+            if (/\b(code|function|bug|refactor|api|script|regex|sql|debug|compile|algorithm|typescript|javascript|python|css|html|stack trace)\b/.test(t)) return 'a senior software engineer';
+            if (/\b(summar(?:y|ize|ise)|tl;dr|condense|digest|recap)\b/.test(t)) return 'an expert summarizer';
+            if (/\b(translate|translation)\b/.test(t)) return 'a professional translator';
+            if (/\b(analy(?:ze|se|sis)|research|compare|evaluate|assess|critique)\b/.test(t)) return 'a rigorous analyst';
+            if (/\b(plan|strategy|roadmap|outline|schedule|prioriti)\b/.test(t)) return 'a strategic planner';
+            if (/\b(design|ui|ux|layout|brand|logo|wireframe)\b/.test(t)) return 'a senior product designer';
+            if (/\b(write|draft|copy|blog|article|essay|email|tweet|post|caption|headline|story|newsletter|tagline|slogan)\b/.test(t)) return 'an expert copywriter';
+            return 'an expert assistant';
+        }
+        function detectFormat(t) {
+            if (/\b(table|tabular|columns?)\b/.test(t)) return 'a Markdown table';
+            if (/\bjson\b/.test(t)) return 'valid JSON only, no prose';
+            if (/\b(bullet|bullets|list)\b/.test(t)) return 'a concise bullet list';
+            if (/\b(steps?|step[- ]by[- ]step|how to|instructions?)\b/.test(t)) return 'numbered steps';
+            if (/\b(code|function|script|snippet)\b/.test(t)) return 'a single code block';
+            if (/\bemail\b/.test(t)) return 'a ready-to-send email';
+            return 'concise prose';
+        }
+        function detectConstraints(t, target) {
+            var c = [];
+            var len = t.match(/\b(?:under|less than|max(?:imum)?(?: of)?|no more than|within|up to)\s+(\d+)\s*(words?|chars?|characters?|sentences?|bullets?|lines?|tokens?)/);
+            if (len) c.push('Limit to ' + len[1] + ' ' + len[2] + '.');
+            else if (/\b(short|brief|concise|tl;dr|one[- ]line|one paragraph)\b/.test(t)) c.push('Keep it brief.');
+            if (/\b(formal|professional)\b/.test(t)) c.push('Professional tone.');
+            if (/\b(casual|friendly|informal|warm|playful)\b/.test(t)) c.push('Warm, casual tone.');
+            if (/\b(beginner|simple|eli5|layman|non[- ]technical)\b/.test(t)) c.push('Explain simply, no jargon.');
+            if (/\b(example|examples|sample)\b/.test(t)) c.push('Include one concrete example.');
+            if (target === 'codex') c.unshift('Return only code unless asked to explain.');
+            c.push('Be concise — no preamble or filler.');
+            return c.filter(function (v, i) { return c.indexOf(v) === i; });
+        }
+        function cleanTask(text, level) {
+            var t = compress(text, level)
+                .replace(/^[\s,.;:!?-]+/, '')
+                .replace(/^[a-z]/, function (m) { return m.toUpperCase(); });
+            if (!/[.!?]$/.test(t)) t += '.';
+            return t;
+        }
+        // level 0 = Standard (labeled), 1 = Tight, 2 = Tightest
+        function forgePrompt(input, target, ctx, level) {
+            input = (input || '').trim();
+            if (!input) return '';
+            var lower = input.toLowerCase();
+            var role = detectRole(lower);
+            var fmt = detectFormat(lower);
+            var cons = detectConstraints(lower, target);
+            var task = cleanTask(input, level);
+            ctx = (ctx || '').trim();
+
+            if (level >= 2) {
+                // Tightest: dense single block, minimal scaffolding.
+                var roleNoun = role.replace(/^an? /, '');
+                var parts = [roleNoun + '.'];
+                if (ctx) parts.push('Ctx: ' + ctx + '.');
+                parts.push(task);
+                parts.push('Limits: ' + joinConstraints(cons) + '.');
+                parts.push('Out: ' + fmt + '.');
+                return compress(parts.join(' '), 2);
+            }
+            if (level === 1) {
+                // Tight: one line, semicolon-joined constraints.
+                var seg = ['You are ' + role + '.'];
+                if (ctx) seg.push('Context: ' + ctx + '.');
+                seg.push(task);
+                seg.push('Constraints: ' + joinConstraints(cons) + '.');
+                seg.push('Output: ' + fmt + '.');
+                return seg.join(' ');
+            }
+            // Standard: clearly labeled sections (works well for Claude / Codex / generic).
+            var lines = [];
+            lines.push('Role: You are ' + role + '.');
+            if (ctx) lines.push('Context: ' + ctx + '.');
+            lines.push('Task: ' + task);
+            lines.push('Constraints:');
+            cons.forEach(function (c) { lines.push('- ' + c); });
+            lines.push('Output: ' + fmt + '.');
+            return lines.join('\n');
+        }
+
+        /* ---------- Copy to clipboard (with execCommand fallback) ---------- */
+        function copyText(text, okMsg) {
+            function fallback() {
+                try {
+                    var ta = document.createElement('textarea');
+                    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                    document.body.appendChild(ta); ta.focus(); ta.select();
+                    document.execCommand('copy'); ta.remove();
+                    toast(okMsg || 'Copied to clipboard.', 'success');
+                } catch (e) { toast('Copy failed — select and copy manually.', 'urgent'); }
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function () {
+                    toast(okMsg || 'Copied to clipboard.', 'success');
+                }, fallback);
+            } else { fallback(); }
+        }
+
+        /* ---------- Speech-to-text dictation into a field ---------- */
+        var dictation = null;
+        function dictateInto(textarea, button, onChange) {
+            if (!SR) { toast('Speech recognition not supported in this browser.', 'urgent'); return; }
+            if (dictation) { try { dictation.stop(); } catch (e) {} return; }
+            var base = textarea.value ? textarea.value.trim() + ' ' : '';
+            dictation = new SR();
+            dictation.lang = 'en-US'; dictation.interimResults = true; dictation.continuous = false;
+            button.classList.add('listening'); button.textContent = '● Listening';
+            dictation.onresult = function (e) {
+                var s = '';
+                for (var i = 0; i < e.results.length; i++) s += e.results[i][0].transcript;
+                textarea.value = base + s.trim();
+                if (onChange) onChange();
+            };
+            dictation.onerror = function (ev) {
+                if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') toast('Microphone blocked.', 'urgent');
+            };
+            dictation.onend = function () {
+                dictation = null; button.classList.remove('listening'); button.textContent = '🎤 Dictate';
+            };
+            try { dictation.start(); } catch (e) { dictation = null; button.classList.remove('listening'); button.textContent = '🎤 Dictate'; }
+        }
+
+        /* ---------- OPTIONAL live AI dispatch (user's own key) ----------
+           A pure front-end app CANNOT securely hold an API key — an embedded key
+           is visible to anyone. The recommended production path is a backend
+           proxy (documented in the README). This optional path uses a key the
+           user pastes into Settings (localStorage only) and is gated + inert
+           without one. No key is ever hardcoded. */
+        function refineWithAI(promptText, onText, onErr) {
+            var s = state.settings;
+            if (!s.apiKey) { onErr('Add your own API key in Settings to enable live AI refine.'); return; }
+            var provider = s.aiProvider || 'anthropic';
+            var sys = 'You are a prompt engineer. Rewrite the user content into the tightest, most ' +
+                      'token-efficient, well-structured prompt that fully preserves intent. ' +
+                      'Reply with ONLY the improved prompt — no preamble, no commentary.';
+            var url, headers, body, pick;
+            if (provider === 'openai') {
+                url = 'https://api.openai.com/v1/chat/completions';
+                headers = { 'content-type': 'application/json', 'authorization': 'Bearer ' + s.apiKey };
+                body = { model: s.apiModel || 'gpt-4o-mini', messages: [{ role: 'system', content: sys }, { role: 'user', content: promptText }] };
+                pick = function (d) { return d && d.choices && d.choices[0] && d.choices[0].message ? d.choices[0].message.content : ''; };
+            } else {
+                url = 'https://api.anthropic.com/v1/messages';
+                headers = {
+                    'content-type': 'application/json',
+                    'x-api-key': s.apiKey,
+                    'anthropic-version': '2023-06-01',
+                    'anthropic-dangerous-direct-browser-access': 'true'
+                };
+                body = { model: s.apiModel || 'claude-opus-4-8', max_tokens: 1024, system: sys, messages: [{ role: 'user', content: promptText }] };
+                pick = function (d) {
+                    if (!d || !d.content) return '';
+                    var blk = d.content.find(function (b) { return b.type === 'text'; });
+                    return blk ? blk.text : '';
+                };
+            }
+            fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(body) })
+                .then(function (res) {
+                    return res.json().then(function (data) {
+                        if (!res.ok) {
+                            var msg = (data && data.error && (data.error.message || data.error.type)) || ('HTTP ' + res.status);
+                            throw new Error(msg);
+                        }
+                        return data;
+                    });
+                })
+                .then(function (data) {
+                    var out = (pick(data) || '').trim();
+                    if (out) onText(out); else onErr('Empty response from the API.');
+                })
+                .catch(function (e) { onErr(e.message || 'Request failed.'); });
+        }
+
+        /* ---------- Prompt Forge modal ---------- */
+        function openForge(seed) {
+            var level = 0;
+
+            // Input
+            var input = document.createElement('textarea');
+            input.placeholder = 'Describe what you want in plain words… e.g. “write a short friendly launch tweet for J8NIX”';
+            input.value = seed || '';
+            var inWrap = document.createElement('div'); inWrap.className = 'forge-input-wrap';
+            var inField = field('Your request', input);
+            var mic = document.createElement('button'); mic.type = 'button'; mic.className = 'mic-btn'; mic.textContent = '🎤 Dictate';
+            mic.title = 'Dictate with your voice';
+            inField.appendChild(mic);
+            inField.classList.add('forge-input-wrap');
+
+            // Target + context
+            var target = document.createElement('select');
+            [['claude', 'Claude'], ['codex', 'Codex / code model'], ['generic', 'Generic LLM']].forEach(function (o) {
+                var op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; target.appendChild(op);
+            });
+            var ctx = document.createElement('select');
+            var none = document.createElement('option'); none.value = ''; none.textContent = 'No project context'; ctx.appendChild(none);
+            state.projects.forEach(function (p) {
+                var op = document.createElement('option');
+                op.value = p.project + (p.client ? ' (' + p.client + ')' : '');
+                op.textContent = op.value; ctx.appendChild(op);
+            });
+            var grid = document.createElement('div'); grid.className = 'forge-grid';
+            grid.appendChild(field('Target', target));
+            grid.appendChild(field('Project context (optional)', ctx));
+
+            // Output
+            var outLabel = document.createElement('div'); outLabel.className = 'forge-label'; outLabel.textContent = 'Engineered prompt';
+            var out = document.createElement('textarea'); out.className = 'forge-out'; out.readOnly = true;
+            out.setAttribute('aria-label', 'Generated prompt');
+
+            // Meta row: tokens + level
+            var meta = document.createElement('div'); meta.className = 'forge-meta';
+            var tok = document.createElement('span'); tok.className = 'token-badge';
+            var tokDot = document.createElement('span'); tokDot.className = 'dot';
+            var tokTxt = document.createElement('span'); tokTxt.textContent = '~0 tokens';
+            tok.appendChild(tokDot); tok.appendChild(tokTxt);
+            var lvl = document.createElement('span'); lvl.className = 'forge-level';
+            meta.appendChild(tok); meta.appendChild(lvl);
+
+            // Action buttons
+            var actions = document.createElement('div'); actions.className = 'forge-actions';
+            var copyBtn = btn('📋 Copy', 'primary', function () { if (out.value) copyText(out.value, 'Prompt copied.'); });
+            var tightenBtn = btn('🗜 Tighten further', 'ghost', function () {
+                if (level < 2) { level++; regen(); }
+                if (level >= 2) tightenBtn.disabled = true;
+            });
+            var readBtn = btn('🔊 Read aloud', 'ghost', function () {
+                if (!out.value) return;
+                var label = target.options[target.selectedIndex].text;
+                speak('Optimized prompt for ' + label + ', about ' + estTokens(out.value) + ' tokens. ' + out.value);
+            });
+            var aiBtn = btn('✨ Refine with AI', 'ghost', function () {
+                if (!out.value) return;
+                aiBtn.disabled = true; aiBtn.textContent = '✨ Refining…';
+                refineWithAI(out.value, function (text) {
+                    out.value = text; tokTxt.textContent = '~' + estTokens(text) + ' tokens';
+                    lvl.textContent = 'AI-refined';
+                    aiBtn.disabled = false; aiBtn.textContent = '✨ Refine with AI';
+                    toast('Prompt refined by your AI provider.', 'success');
+                    if (state.settings.voiceEnabled) speak('Refined with AI.');
+                }, function (err) {
+                    aiBtn.disabled = false; aiBtn.textContent = '✨ Refine with AI';
+                    toast(err, 'urgent');
+                });
+            });
+            actions.appendChild(copyBtn); actions.appendChild(tightenBtn);
+            actions.appendChild(readBtn); actions.appendChild(aiBtn);
+
+            // AI-path note (honest about gating)
+            var aiNote = document.createElement('p'); aiNote.className = 'forge-note';
+            function refreshAiNote() {
+                if (state.settings.apiKey) {
+                    aiBtn.disabled = false;
+                    aiNote.textContent = '✨ Live refine uses your own ' + (state.settings.aiProvider === 'openai' ? 'OpenAI' : 'Anthropic') + ' key (stored locally). For production, use a backend proxy — see README.';
+                } else {
+                    aiBtn.disabled = true;
+                    aiNote.textContent = 'Live AI refine is off. The optimized prompt above works fully offline — copy it into Claude, Codex, or any tool. Add your own API key in Settings to enable optional refine.';
+                }
+            }
+
+            function regen() {
+                out.value = forgePrompt(input.value, target.value, ctx.value, level);
+                tokTxt.textContent = '~' + estTokens(out.value) + ' tokens';
+                lvl.textContent = ['Standard', 'Tight', 'Tightest'][level];
+                tightenBtn.disabled = level >= 2;
+            }
+            input.addEventListener('input', function () { level = 0; regen(); });
+            target.addEventListener('change', function () { regen(); });
+            ctx.addEventListener('change', regen);
+            mic.addEventListener('click', function () { dictateInto(input, mic, regen); });
+
+            refreshAiNote();
+            regen();
+
+            var foot = [ btn('Done', 'ghost', closeModal) ];
+            openModal('🔥 Prompt Forge', [inField, grid, outLabel, out, meta, actions, aiNote], foot, true);
+
+            if (state.settings.voiceEnabled) speak('Prompt Forge ready.');
+        }
+
         /* ---------- Quick actions ---------- */
         function quickAction(kind) {
             switch (kind) {
+                case 'forge': openForge(''); break;
                 case 'newProject': addProject(); toast('New project added.', 'success'); break;
                 case 'newTask': addTask(); toast('New task added.', 'success'); break;
                 case 'memo': toggleRecord(); break;
@@ -1019,6 +1518,7 @@
             else speak('Hello ' + (state.settings.userName.split(' ')[0]||'') + ', J8NIX is ready.');
         });
         $('#wakeBtn').addEventListener('click', toggleWake);
+        $('#forgeBtn').addEventListener('click', function () { openForge(''); });
         $('#settingsBtn').addEventListener('click', openSettings);
         var sbm = $('#settingsBtnMobile'); if (sbm) sbm.addEventListener('click', openSettings);
         $('#modalClose').addEventListener('click', closeModal);
@@ -1039,8 +1539,14 @@
                 var div = document.createElement('div');
                 div.className = 'message ' + (m.role === 'user' ? 'user' : 'system');
                 var span = document.createElement('span'); span.textContent = m.text; div.appendChild(span);
+                if (m.t) {
+                    var meta = document.createElement('div'); meta.className = 'meta';
+                    meta.textContent = new Date(m.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    div.appendChild(meta);
+                }
                 $('#chatFeed').appendChild(div);
             });
+            $('#chatFeed').scrollTop = $('#chatFeed').scrollHeight;
         } else {
             appendMessage('system', { text: 'Welcome back, ' + (state.settings.userName.split(' ')[0]||'Dave') + '. How can I make your operations smarter today?', transient: true });
         }
@@ -1049,7 +1555,7 @@
         if (!state.settings.onboarded) setTimeout(runOnboarding, 500);
 
         // expose minimal debug hook (no eval, read-only)
-        window.J8NIX = { version: '1.0.0', reset: function () { localStorage.removeItem(STORE_KEY); location.reload(); } };
+        window.J8NIX = { version: '1.1.0', reset: function () { localStorage.removeItem(STORE_KEY); location.reload(); } };
     })();
     </script>
 </body>

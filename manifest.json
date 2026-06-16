@@ -1,7 +1,7 @@
 {
   "name": "J8NIX — Smart Operations OS",
   "short_name": "J8NIX",
-  "description": "Smart Operations OS: calendar, tasks, projects, voice assistant and live status in one clean workspace.",
+  "description": "Smart Operations OS: calendar, tasks, projects, Prompt Forge AI prompt composer, voice assistant and live status in one clean workspace.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
