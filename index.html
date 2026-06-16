@@ -290,7 +290,22 @@
         .forge-note { font-size: 12px; color: var(--neutral); margin: 6px 0 0; }
         button[disabled] { opacity: .5; cursor: not-allowed; }
         button[disabled]:active { transform: none; }
+        /* Forge starter chips — first-use discoverability */
+        .forge-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 2px; }
+        .chip {
+            border: 1px solid var(--border); background: #fff; color: var(--neutral);
+            border-radius: 999px; padding: 7px 13px; font-size: 12.5px; font-weight: 700;
+            cursor: pointer; font-family: inherit;
+        }
+        .chip:hover { background: #eef3f8; border-color: #cdd8e5; color: var(--text); }
         @media (max-width: 640px) { .forge-grid { grid-template-columns: 1fr; } }
+
+        /* Empty states for tables */
+        .empty-row td { padding: 30px 16px; }
+        tbody tr.empty-row:hover { background: transparent; }
+        .empty-state { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+        .empty-state .em-emoji { font-size: 26px; line-height: 1; }
+        .empty-state .em-msg { font-size: 13px; color: var(--neutral); }
 
         /* Mobile action bar */
         .mobile-bar { display: none; }
@@ -313,6 +328,9 @@
                 gap: 8px; box-shadow: 0 -4px 16px rgba(16,42,67,.08);
             }
             .mobile-bar button { flex: 1; padding: 12px 4px; font-size: 12px; }
+            /* Forge is already in the mobile bar + Quick Actions — drop the redundant
+               chat-header button on small screens to keep the header tidy. */
+            #forgeBtn { display: none; }
         }
         @media (prefers-reduced-motion: reduce) { *{ animation: none !important; transition: none !important; } }
     </style>
@@ -393,7 +411,7 @@
                     </svg>
                     <div class="progress-center">
                         <div class="big" id="progressFraction">4/9</div>
-                        <div class="sub">Tasks left</div>
+                        <div class="sub" id="progressSub">Tasks left</div>
                     </div>
                 </div>
             </section>
@@ -620,10 +638,29 @@
             return td;
         }
 
+        /* ---------- Friendly empty-state row ---------- */
+        function emptyRow(cols, emoji, msg, ctaLabel, ctaFn) {
+            var tr = document.createElement('tr'); tr.className = 'empty-row';
+            var td = document.createElement('td'); td.colSpan = cols;
+            var wrap = document.createElement('div'); wrap.className = 'empty-state';
+            var em = document.createElement('div'); em.className = 'em-emoji'; em.textContent = emoji; em.setAttribute('aria-hidden', 'true');
+            var m = document.createElement('div'); m.className = 'em-msg'; m.textContent = msg;
+            wrap.appendChild(em); wrap.appendChild(m);
+            if (ctaLabel) {
+                var b = document.createElement('button'); b.className = 'primary'; b.textContent = ctaLabel;
+                b.addEventListener('click', ctaFn); wrap.appendChild(b);
+            }
+            td.appendChild(wrap); tr.appendChild(td); return tr;
+        }
+
         /* ---------- Render tasks ---------- */
         function renderTasks() {
             var tb = $('#tasksTable tbody');
             tb.textContent = '';
+            if (!state.tasks.length) {
+                tb.appendChild(emptyRow(8, '🗒️', 'No tasks today — you’re all clear.', '+ Add your first task', addTask));
+                return;
+            }
             state.tasks.forEach(function (t, i) {
                 var tr = document.createElement('tr');
                 var num = document.createElement('td'); num.textContent = String(i + 1); tr.appendChild(num);
@@ -647,6 +684,10 @@
         function renderProjects() {
             var tb = $('#projectsTable tbody');
             tb.textContent = '';
+            if (!state.projects.length) {
+                tb.appendChild(emptyRow(7, '📁', 'No active projects yet.', '+ Add your first project', addProject));
+                return;
+            }
             state.projects.forEach(function (p, i) {
                 var tr = document.createElement('tr');
                 var num = document.createElement('td'); num.textContent = String(i + 1); tr.appendChild(num);
@@ -686,12 +727,20 @@
             var total = state.tasks.length;
             var done = state.tasks.filter(function (t) { return t.status === 'Done'; }).length;
             var left = total - done;
-            $('#progressFraction').textContent = left + '/' + total;
+            var sub = $('#progressSub');
+            if (!total) {
+                $('#progressFraction').textContent = '—';
+                if (sub) sub.textContent = 'No tasks yet';
+            } else {
+                $('#progressFraction').textContent = left + '/' + total;
+                if (sub) sub.textContent = left === 0 ? 'All done 🎉' : 'Tasks left';
+            }
             var frac = total ? done / total : 0;
             $('#progressArc').style.strokeDashoffset = String(ARC * (1 - frac));
             var svg = $('#progressArc').ownerSVGElement;
-            if (svg) svg.setAttribute('aria-label',
-                'Daily progress: ' + done + ' of ' + total + ' tasks complete, ' + left + ' remaining.');
+            if (svg) svg.setAttribute('aria-label', total
+                ? ('Daily progress: ' + done + ' of ' + total + ' tasks complete, ' + left + ' remaining.')
+                : 'Daily progress: no tasks yet.');
         }
 
         function updateStats() {
@@ -1058,7 +1107,7 @@
             prod.appendChild(document.createTextNode('J8NIX'));
             var tm = document.createElement('span'); tm.className = 'tm'; tm.textContent = '™';
             prod.appendChild(tm);
-            prod.appendChild(document.createTextNode(' v1.1.0 — a product of 3Shamrocks Studio.'));
+            prod.appendChild(document.createTextNode(' v1.1.1 — a product of 3Shamrocks Studio.'));
             copy.appendChild(prod);
             box.appendChild(logo); box.appendChild(copy);
             return box;
@@ -1394,6 +1443,23 @@
             inField.appendChild(mic);
             inField.classList.add('forge-input-wrap');
 
+            // Starter chips — one tap to seed a common request (discoverability + good defaults).
+            var starters = [
+                ['📣 Launch tweet', 'write a short, friendly launch tweet with one example'],
+                ['🐛 Debug code', 'find and fix the bug in this function and explain the cause'],
+                ['📊 Summarize', 'summarize this document in 5 concise bullet points'],
+                ['📧 Cold email', 'draft a brief, warm outreach email with a clear call to action'],
+                ['🗺 Plan', 'outline a step-by-step plan to ship this project']
+            ];
+            var chipsWrap = document.createElement('div'); chipsWrap.className = 'forge-chips';
+            chipsWrap.setAttribute('aria-label', 'Starter prompts');
+            starters.forEach(function (s) {
+                var c = document.createElement('button'); c.type = 'button'; c.className = 'chip';
+                c.textContent = s[0]; c.title = s[1];
+                c.addEventListener('click', function () { input.value = s[1]; level = 0; regen(); input.focus(); });
+                chipsWrap.appendChild(c);
+            });
+
             // Target + context
             var target = document.createElement('select');
             [['claude', 'Claude'], ['codex', 'Codex / code model'], ['generic', 'Generic LLM']].forEach(function (o) {
@@ -1414,6 +1480,7 @@
             var outLabel = document.createElement('div'); outLabel.className = 'forge-label'; outLabel.textContent = 'Engineered prompt';
             var out = document.createElement('textarea'); out.className = 'forge-out'; out.readOnly = true;
             out.setAttribute('aria-label', 'Generated prompt');
+            out.placeholder = 'Your engineered prompt appears here. Type a request above, tap a starter, or dictate with the mic.';
 
             // Meta row: tokens + level
             var meta = document.createElement('div'); meta.className = 'forge-meta';
@@ -1466,10 +1533,16 @@
             }
 
             function regen() {
-                out.value = forgePrompt(input.value, target.value, ctx.value, level);
-                tokTxt.textContent = '~' + estTokens(out.value) + ' tokens';
-                lvl.textContent = ['Standard', 'Tight', 'Tightest'][level];
-                tightenBtn.disabled = level >= 2;
+                var p = forgePrompt(input.value, target.value, ctx.value, level);
+                out.value = p;
+                var has = !!p;
+                tokTxt.textContent = '~' + (has ? estTokens(p) : 0) + ' tokens';
+                lvl.textContent = has ? ['Standard', 'Tight', 'Tightest'][level] : '';
+                // Gate actions until there's an actual prompt to act on.
+                copyBtn.disabled = !has;
+                readBtn.disabled = !has;
+                tightenBtn.disabled = !has || level >= 2;
+                aiBtn.disabled = !(state.settings.apiKey && has);
             }
             input.addEventListener('input', function () { level = 0; regen(); });
             target.addEventListener('change', function () { regen(); });
@@ -1480,7 +1553,7 @@
             regen();
 
             var foot = [ btn('Done', 'ghost', closeModal) ];
-            openModal('🔥 Prompt Forge', [inField, grid, outLabel, out, meta, actions, aiNote], foot, true);
+            openModal('🔥 Prompt Forge', [inField, chipsWrap, grid, outLabel, out, meta, actions, aiNote], foot, true);
 
             if (state.settings.voiceEnabled) speak('Prompt Forge ready.');
         }
@@ -1555,7 +1628,7 @@
         if (!state.settings.onboarded) setTimeout(runOnboarding, 500);
 
         // expose minimal debug hook (no eval, read-only)
-        window.J8NIX = { version: '1.1.0', reset: function () { localStorage.removeItem(STORE_KEY); location.reload(); } };
+        window.J8NIX = { version: '1.1.1', reset: function () { localStorage.removeItem(STORE_KEY); location.reload(); } };
     })();
     </script>
 </body>
