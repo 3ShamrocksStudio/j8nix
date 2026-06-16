@@ -6,9 +6,10 @@
     <meta name="description" content="J8NIX — Smart Operations OS. Calendar, tasks, projects, voice assistant and live status in one clean workspace.">
     <meta name="theme-color" content="#ccd8e5">
     <!-- CSP: no eval, no remote script. Allow inline styles/scripts (single-file app) + Google Fonts + data/blob media. -->
-    <!-- connect-src includes the Anthropic + OpenAI API hosts so the OPTIONAL, user-key-gated
-         "Refine with AI" path in Prompt Forge can run. No key is ever shipped in this file. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.anthropic.com https://api.openai.com; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <!-- connect-src lists only the OPTIONAL, user-key-gated endpoints: Anthropic/OpenAI for
+         Prompt Forge "Refine with AI", and ElevenLabs for the optional premium neural voice.
+         No key is ever shipped in this file. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.anthropic.com https://api.openai.com https://api.elevenlabs.io; object-src 'none'; base-uri 'none'; form-action 'none'">
     <title>J8NIX™ — Smart Operations OS, Only Smarter</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
@@ -307,6 +308,25 @@
         .empty-state .em-emoji { font-size: 26px; line-height: 1; }
         .empty-state .em-msg { font-size: 13px; color: var(--neutral); }
 
+        /* Project tabs (Active / Done) */
+        .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .proj-tabs { display: inline-flex; background: #eef3f8; border-radius: 999px; padding: 3px; }
+        .tab-btn {
+            border: none; background: transparent; color: var(--neutral); cursor: pointer;
+            font-family: inherit; font-weight: 800; font-size: 11px; letter-spacing: .4px;
+            text-transform: uppercase; padding: 6px 12px; border-radius: 999px;
+        }
+        .tab-btn.on { background: #fff; color: var(--text); box-shadow: 0 1px 4px rgba(16,42,67,.12); }
+
+        /* 3Shamrocks logo always sits on a dark-grey badge (brand rule) */
+        .logo-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            background: #2f343d; border-radius: 12px; padding: 10px 14px;
+            box-shadow: 0 2px 8px rgba(16,42,67,.14);
+        }
+        .logo-badge img { display: block; }
+        .about-box .logo-badge { margin-bottom: 10px; }
+
         /* Mobile action bar */
         .mobile-bar { display: none; }
 
@@ -383,10 +403,16 @@
                 </div>
             </section>
 
-            <section class="panel" aria-label="All active projects">
+            <section class="panel" aria-label="Projects">
                 <div class="panel-header">
-                    <span>All Active Projects</span>
-                    <button class="ghost" id="addProjectBtn">+ New Project</button>
+                    <span>Projects</span>
+                    <span class="header-actions">
+                        <span class="proj-tabs" role="tablist" aria-label="Project filter">
+                            <button class="tab-btn on" id="tabActive" role="tab" aria-selected="true">Active</button>
+                            <button class="tab-btn" id="tabDone" role="tab" aria-selected="false">Done</button>
+                        </span>
+                        <button class="ghost" id="addProjectBtn">+ New Project</button>
+                    </span>
                 </div>
                 <div class="table-wrap">
                     <table id="projectsTable">
@@ -406,7 +432,7 @@
                 <div class="progress-wrap">
                     <svg class="progress-circle" viewBox="0 0 120 120" role="img" aria-label="Daily progress ring">
                         <circle cx="60" cy="60" r="52" fill="none" stroke="#e6e9ef" stroke-width="11"></circle>
-                        <circle id="progressArc" cx="60" cy="60" r="52" fill="none" stroke="#f2c194"
+                        <circle id="progressArc" cx="60" cy="60" r="52" fill="none" stroke="#4faf70"
                                 stroke-width="11" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"></circle>
                     </svg>
                     <div class="progress-center">
@@ -460,7 +486,7 @@
 
     <!-- Persistent copyright / branding credit -->
     <footer class="site-footer">
-        <img src="3shamrocks_black.png" alt="3Shamrocks Studio" onerror="this.style.display='none'">
+        <span class="logo-badge"><img src="3shamrocks_black.png" alt="3Shamrocks Studio" onerror="this.parentNode.style.display='none'"></span>
         <span class="copy">© 2026 3Shamrocks Studio. All rights reserved. &nbsp;·&nbsp; <strong>J8NIX<span class="tm">™</span></strong> is a product of 3Shamrocks Studio.</span>
     </footer>
 
@@ -506,20 +532,26 @@
         /* ---------- Utilities ---------- */
         var $ = function (sel, root) { return (root || document).querySelector(sel); };
         var STORE_KEY = 'j8nix_state_v1';
+        /* Calm, psychologically-meaningful status palette. Active (blue / momentum) is now
+           clearly distinct from Done (green / completion). edge = saturated accent for row stripes. */
         var STATUS_CYCLE = {
             task: [
-                { label: 'New',         bg: '#eef3f8', fg: '#586475' },
-                { label: 'In Progress', bg: '#f2c194', fg: '#5a3d1e' },
-                { label: 'Blocked',     bg: '#e16a66', fg: '#3d100e' },
-                { label: 'Done',        bg: '#7bb48b', fg: '#12331f' }
+                { label: 'New',         bg: '#e7edf3', fg: '#44546a', edge: '#94a6bd' }, // neutral slate — to-do
+                { label: 'In Progress', bg: '#d4e4f7', fg: '#1b3e66', edge: '#3b82c4' }, // blue — focus/momentum
+                { label: 'Blocked',     bg: '#f8ddc6', fg: '#7a4310', edge: '#e08a3c' }, // orange — stuck
+                { label: 'Done',        bg: '#cfe9d6', fg: '#1c5132', edge: '#4faf70' }  // calm green — completion
             ],
             project: [
-                { label: 'Active',   bg: '#7bb48b', fg: '#12331f' },
-                { label: 'On Hold',  bg: '#f2c194', fg: '#5a3d1e' },
-                { label: 'At Risk',  bg: '#e16a66', fg: '#3d100e' },
-                { label: 'Archived', bg: '#eef3f8', fg: '#586475' }
+                { label: 'Active',   bg: '#d4e4f7', fg: '#1b3e66', edge: '#3b82c4' }, // blue — ongoing
+                { label: 'On Hold',  bg: '#f6e6c0', fg: '#6b4e16', edge: '#d6a93f' }, // amber — paused
+                { label: 'At Risk',  bg: '#f6d2d0', fg: '#7a1d19', edge: '#d9534f' }, // red — urgent
+                { label: 'Done',     bg: '#cfe9d6', fg: '#1c5132', edge: '#4faf70' }  // green — completed (auto-moves)
             ]
         };
+        function statusEdge(kind, label) {
+            var c = STATUS_CYCLE[kind].find(function (s) { return s.label === label; });
+            return c ? c.edge : 'transparent';
+        }
 
         function todayISO() { return new Date().toISOString().slice(0, 10); }
 
@@ -535,7 +567,9 @@
                     onboarded: false,
                     aiProvider: 'anthropic', // optional live-dispatch provider (anthropic | openai)
                     apiModel: '',            // optional model override
-                    apiKey: ''               // BYO key, stored locally only — see in-app warning + README
+                    apiKey: '',              // BYO key, stored locally only — see in-app warning + README
+                    ttsKey: '',              // optional ElevenLabs key for a premium neural voice (local only)
+                    ttsVoiceId: ''           // optional ElevenLabs voice id (defaults to a warm female)
                 },
                 tasks: [
                     { id: 1, project: 'J8NIX UI polish',        created: '2026-06-10', deadline: 'Today',    who: 'Dave',  status: 'In Progress', more: 'Final pass' },
@@ -663,13 +697,18 @@
             }
             state.tasks.forEach(function (t, i) {
                 var tr = document.createElement('tr');
-                var num = document.createElement('td'); num.textContent = String(i + 1); tr.appendChild(num);
+                var num = document.createElement('td'); num.textContent = String(i + 1);
+                num.style.boxShadow = 'inset 4px 0 0 ' + statusEdge('task', t.status);
+                tr.appendChild(num);
                 tr.appendChild(editableCell(t.project,  function (v) { t.project = v; save(); }));
                 tr.appendChild(editableCell(t.created,  function (v) { t.created = v; save(); }));
                 tr.appendChild(editableCell(t.deadline, function (v) { t.deadline = v; save(); }));
                 tr.appendChild(editableCell(t.who,      function (v) { t.who = v; save(); }));
                 var statusTd = document.createElement('td');
-                statusTd.appendChild(makePill('task', t.status, function (label) { t.status = label; save(); updateProgress(); updateStats(); }));
+                statusTd.appendChild(makePill('task', t.status, function (label) {
+                    t.status = label; num.style.boxShadow = 'inset 4px 0 0 ' + statusEdge('task', label);
+                    save(); updateProgress(); updateStats();
+                }));
                 tr.appendChild(statusTd);
                 tr.appendChild(editableCell(t.more, function (v) { t.more = v; save(); }));
                 tr.appendChild(delButton(function () {
@@ -680,28 +719,71 @@
             });
         }
 
-        /* ---------- Render projects ---------- */
+        /* ---------- Render projects (Active / Done tabs) ----------
+           A project with status "Done" auto-moves to the Done tab; it can be restored. */
+        var projectTab = 'active';
+        function setProjectTab(tab) {
+            projectTab = tab;
+            var a = $('#tabActive'), d = $('#tabDone');
+            if (a) { a.classList.toggle('on', tab === 'active'); a.setAttribute('aria-selected', tab === 'active'); }
+            if (d) { d.classList.toggle('on', tab === 'done'); d.setAttribute('aria-selected', tab === 'done'); }
+            renderProjects();
+        }
         function renderProjects() {
             var tb = $('#projectsTable tbody');
             tb.textContent = '';
-            if (!state.projects.length) {
-                tb.appendChild(emptyRow(7, '📁', 'No active projects yet.', '+ Add your first project', addProject));
+            var doneList = state.projects.filter(function (p) { return p.status === 'Done'; });
+            var activeList = state.projects.filter(function (p) { return p.status !== 'Done'; });
+            var a = $('#tabActive'), d = $('#tabDone');
+            if (a) a.textContent = 'Active (' + activeList.length + ')';
+            if (d) d.textContent = 'Done (' + doneList.length + ')';
+            var list = projectTab === 'done' ? doneList : activeList;
+            if (!list.length) {
+                tb.appendChild(projectTab === 'done'
+                    ? emptyRow(7, '✅', 'No completed projects yet. Mark a project “Done” to file it here.')
+                    : emptyRow(7, '📁', 'No active projects yet.', '+ Add your first project', addProject));
                 return;
             }
-            state.projects.forEach(function (p, i) {
+            list.forEach(function (p, idx) {
                 var tr = document.createElement('tr');
-                var num = document.createElement('td'); num.textContent = String(i + 1); tr.appendChild(num);
+                var num = document.createElement('td'); num.textContent = String(idx + 1);
+                num.style.boxShadow = 'inset 4px 0 0 ' + statusEdge('project', p.status);
+                tr.appendChild(num);
                 tr.appendChild(editableCell(p.client,   function (v) { p.client = v; save(); }));
                 tr.appendChild(editableCell(p.project,  function (v) { p.project = v; save(); }));
                 tr.appendChild(editableCell(p.deadline, function (v) { p.deadline = v; save(); }));
                 tr.appendChild(editableCell(p.who,      function (v) { p.who = v; save(); }));
                 var statusTd = document.createElement('td');
-                statusTd.appendChild(makePill('project', p.status, function (label) { p.status = label; save(); }));
-                tr.appendChild(statusTd);
-                tr.appendChild(delButton(function () {
-                    state.projects.splice(i, 1); save(); renderProjects(); updateStats();
-                    toast('Project deleted.');
+                statusTd.appendChild(makePill('project', p.status, function (label) {
+                    p.status = label; num.style.boxShadow = 'inset 4px 0 0 ' + statusEdge('project', label);
+                    save(); updateStats();
+                    // Auto-move between tabs when crossing the Done boundary.
+                    var crossed = (label === 'Done') !== (projectTab === 'done');
+                    if (crossed) {
+                        renderProjects();
+                        if (label === 'Done') toast('Project completed — moved to Done.', 'success');
+                    }
                 }));
+                tr.appendChild(statusTd);
+                var actions = document.createElement('td'); actions.className = 'row-actions';
+                if (p.status === 'Done') {
+                    var restore = document.createElement('button');
+                    restore.className = 'icon-btn'; restore.title = 'Restore to Active';
+                    restore.setAttribute('aria-label', 'Restore project to Active'); restore.textContent = '↩︎';
+                    restore.addEventListener('click', function () {
+                        p.status = 'Active'; save(); updateStats(); renderProjects();
+                        toast('Project restored to Active.', 'success');
+                    });
+                    actions.appendChild(restore);
+                }
+                var del = document.createElement('button');
+                del.className = 'icon-btn'; del.title = 'Delete project'; del.setAttribute('aria-label', 'Delete project'); del.textContent = '🗑';
+                del.addEventListener('click', function () {
+                    state.projects.splice(state.projects.indexOf(p), 1); save(); renderProjects(); updateStats();
+                    toast('Project deleted.');
+                });
+                actions.appendChild(del);
+                tr.appendChild(actions);
                 tb.appendChild(tr);
             });
         }
@@ -716,7 +798,8 @@
         }
         function addProject() {
             state.projects.push({ id: nextId(state.projects), client: 'New client', project: 'New project', deadline: 'TBD', who: 'Team', status: 'Active' });
-            save(); renderProjects(); updateStats();
+            save(); updateStats();
+            if (projectTab !== 'active') setProjectTab('active'); else renderProjects();
             var rows = $('#projectsTable tbody').children;
             if (rows.length) rows[rows.length - 1].children[1].focus();
         }
@@ -885,10 +968,31 @@
             setTimeout(function () { assistantReply(msg); }, 450);
         }
 
-        /* ---------- Text-to-speech (warm female voice preferred) ---------- */
+        /* ---------- Text-to-speech ---------- */
         var chosenVoice = null;
         function listVoices() {
             return ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
+        }
+        // Brand must be pronounced "Jay Eight Nix" — feed the synthesizer the phonetic
+        // form (browsers don't support SSML <phoneme>), and strip the ™ so it isn't read aloud.
+        function sayable(text) {
+            return String(text == null ? '' : text)
+                .replace(/J\s*8\s*NIX/gi, 'Jay Eight Nix')
+                .replace(/\bJ8NIX\b/gi, 'Jay Eight Nix')
+                .replace(/™/g, '');
+        }
+        // Score voices to prefer the warmest, most natural the device offers.
+        function voiceScore(v) {
+            var n = v.name.toLowerCase(); var s = 0;
+            if (/enhanced|premium|neural|natural/.test(n)) s += 50;
+            ['ava', 'samantha', 'allison', 'serena', 'jenny', 'aria', 'sonia', 'libby', 'emma', 'nora', 'zoe',
+             'google us english', 'google uk english female', 'microsoft aria', 'microsoft jenny']
+                .forEach(function (name, i) { if (n.indexOf(name) !== -1) s += 30 - i; });
+            if (/female/.test(n)) s += 10;
+            if (/en[-_]us/i.test(v.lang)) s += 8; else if (/en[-_]/i.test(v.lang)) s += 5;
+            // de-prioritise the classic novelty / robotic macOS voices
+            if (/compact|eloquence|albert|zarvox|trinoids|bad news|bahh|bells|boing|jester|cellos|deranged|hysterical|wobble|whisper|superstar|organ|bubbles|fred|junior|ralph|kathy/.test(n)) s -= 60;
+            return s;
         }
         function pickVoice() {
             var voices = listVoices();
@@ -897,25 +1001,51 @@
             // 1) explicit user choice from Settings
             if (state.settings.voiceName) {
                 chosenVoice = voices.find(function (v) { return v.name === state.settings.voiceName; }) || null;
+                if (chosenVoice) return;
             }
-            // 2) auto-pick a warm female voice
-            var prefer = ['samantha', 'victoria', 'karen', 'serena', 'moira', 'tessa', 'fiona', 'google uk english female', 'zira', 'female'];
-            for (var i = 0; i < prefer.length && !chosenVoice; i++) {
-                chosenVoice = voices.find(function (v) { return v.name.toLowerCase().indexOf(prefer[i]) !== -1; }) || null;
-            }
-            // 3) any English voice, else first available
-            if (!chosenVoice) chosenVoice = voices.find(function (v) { return /en[-_]/i.test(v.lang); }) || voices[0];
+            // 2) highest-scoring (warmest/most natural) English voice
+            var en = voices.filter(function (v) { return /en[-_]/i.test(v.lang); });
+            var pool = en.length ? en : voices;
+            chosenVoice = pool.reduce(function (best, v) { return voiceScore(v) > voiceScore(best) ? v : best; }, pool[0]);
         }
-        function speak(text) {
+        function browserSpeak(spoken) {
             if (!('speechSynthesis' in window)) return;
             try {
                 speechSynthesis.cancel();
-                var u = new SpeechSynthesisUtterance(text);
+                var u = new SpeechSynthesisUtterance(spoken);
                 if (!chosenVoice) pickVoice();
                 if (chosenVoice) u.voice = chosenVoice;
-                u.pitch = 1.08; u.rate = 1.03; u.volume = 1;
+                // Slightly slower + natural pitch for a warmer, less robotic cadence.
+                u.pitch = 1.0; u.rate = 0.92; u.volume = 1;
                 speechSynthesis.speak(u);
             } catch (e) {}
+        }
+        // Optional premium neural voice (ElevenLabs) — only if the user pasted their own
+        // key in Settings. Falls back to the browser voice on any failure.
+        var premiumAudio = null;
+        function speakPremium(spoken, onFail) {
+            try {
+                var voiceId = state.settings.ttsVoiceId || 'EXAVITQu4vr4xnSDxMaL'; // "Sarah" — warm female default
+                fetch('https://api.elevenlabs.io/v1/text-to-speech/' + encodeURIComponent(voiceId), {
+                    method: 'POST',
+                    headers: { 'xi-api-key': state.settings.ttsKey, 'content-type': 'application/json', 'accept': 'audio/mpeg' },
+                    body: JSON.stringify({ text: spoken, model_id: 'eleven_turbo_v2_5', voice_settings: { stability: 0.45, similarity_boost: 0.8 } })
+                }).then(function (res) {
+                    if (!res.ok) throw new Error('tts ' + res.status);
+                    return res.blob();
+                }).then(function (blob) {
+                    if (premiumAudio) { try { premiumAudio.pause(); } catch (e) {} }
+                    var url = URL.createObjectURL(blob);
+                    premiumAudio = new Audio(url);
+                    premiumAudio.onended = function () { URL.revokeObjectURL(url); };
+                    premiumAudio.play();
+                }).catch(function () { if (onFail) onFail(); });
+            } catch (e) { if (onFail) onFail(); }
+        }
+        function speak(text) {
+            var spoken = sayable(text);
+            if (state.settings.ttsKey) speakPremium(spoken, function () { browserSpeak(spoken); });
+            else browserSpeak(spoken);
         }
         if ('speechSynthesis' in window) {
             speechSynthesis.onvoiceschanged = pickVoice;
@@ -966,8 +1096,9 @@
                 var transcript = '';
                 for (var i = e.resultIndex; i < e.results.length; i++) transcript += e.results[i][0].transcript;
                 transcript = transcript.trim();
-                if (/hey,?\s*j[\s-]*8?\s*nix|hey jay nix|hey janux/i.test(transcript)) {
-                    var cmd = transcript.replace(/.*?(hey,?\s*j[\s-]*8?\s*nix|hey jay nix|hey janux)/i, '').trim();
+                var WAKE = /hey,?\s*(j[\s-]*8?\s*nix|jay\s*(?:eight|8)?\s*nix|jay\s*nix|janux|jenix|genix|jaynix)/i;
+                if (WAKE.test(transcript)) {
+                    var cmd = transcript.replace(new RegExp('.*?(' + WAKE.source + ')', 'i'), '').trim();
                     $('#voiceState').textContent = '• heard you';
                     if (cmd) { appendMessage('user', { text: cmd }); assistantReply(cmd); }
                     else { appendMessage('system', { text: 'Yes ' + (state.settings.userName.split(' ')[0]||'') + '? I’m listening.' }); speak('Yes? I’m listening.'); }
@@ -1097,8 +1228,10 @@
 
         function aboutBox() {
             var box = document.createElement('div'); box.className = 'about-box';
+            var badge = document.createElement('span'); badge.className = 'logo-badge';
             var logo = document.createElement('img'); logo.src = '3shamrocks_black.png'; logo.alt = '3Shamrocks Studio';
-            logo.onerror = function () { this.style.display = 'none'; };
+            logo.onerror = function () { badge.style.display = 'none'; };
+            badge.appendChild(logo);
             var copy = document.createElement('div'); copy.className = 'copy';
             // Build with a real ™ superscript while keeping text sanitized
             copy.appendChild(document.createTextNode('© 2026 3Shamrocks Studio. All rights reserved.'));
@@ -1107,9 +1240,9 @@
             prod.appendChild(document.createTextNode('J8NIX'));
             var tm = document.createElement('span'); tm.className = 'tm'; tm.textContent = '™';
             prod.appendChild(tm);
-            prod.appendChild(document.createTextNode(' v1.1.1 — a product of 3Shamrocks Studio.'));
+            prod.appendChild(document.createTextNode(' v1.2.0 — a product of 3Shamrocks Studio.'));
             copy.appendChild(prod);
-            box.appendChild(logo); box.appendChild(copy);
+            box.appendChild(badge); box.appendChild(copy);
             return box;
         }
 
@@ -1133,11 +1266,31 @@
             if ('speechSynthesis' in window && !listVoices().length) {
                 speechSynthesis.onvoiceschanged = function () { pickVoice(); };
             }
-            var voiceTest = btn('🔊 Test', 'ghost', function () {
-                state.settings.voiceName = voiceSel.value; pickVoice();
-                speak('Hi, this is J8NIX. How can I help?');
+            // Optional premium neural voice (ElevenLabs, BYO key) — the path to a truly human voice.
+            var ttsKeyIn = document.createElement('input'); ttsKeyIn.type = 'password'; ttsKeyIn.autocomplete = 'off';
+            ttsKeyIn.placeholder = 'Paste your ElevenLabs API key (optional)'; ttsKeyIn.value = state.settings.ttsKey || '';
+            var ttsVoiceIn = document.createElement('input'); ttsVoiceIn.type = 'text';
+            ttsVoiceIn.placeholder = 'Voice ID (optional — defaults to a warm female)'; ttsVoiceIn.value = state.settings.ttsVoiceId || '';
+
+            var voiceTest = btn('🔊 Test voice', 'ghost', function () {
+                // Apply the typed values so the test reflects exactly what you'd save.
+                state.settings.voiceName = voiceSel.value;
+                state.settings.ttsKey = ttsKeyIn.value.trim();
+                state.settings.ttsVoiceId = ttsVoiceIn.value.trim();
+                pickVoice();
+                speak('Hi, this is J8NIX. How can I make your operations smarter today?');
             });
             voiceTest.style.marginTop = '8px';
+
+            var ttsHead = document.createElement('div'); ttsHead.className = 'forge-label'; ttsHead.textContent = 'Optional: premium neural voice';
+            var ttsWarn = document.createElement('div'); ttsWarn.className = 'warn-box';
+            var tw = document.createElement('strong'); tw.textContent = '⚠ Built-in browser voices are limited. ';
+            ttsWarn.appendChild(tw);
+            ttsWarn.appendChild(document.createTextNode(
+                'For a genuinely human, warm voice, paste your own ElevenLabs API key — J8NIX will speak through it (falling back to the system voice if it fails). ' +
+                'The key is stored only in this browser and is exposed to page scripts, so use a limited key; the production-safe path is a backend proxy (see README). ' +
+                'Leave blank to use the best built-in system voice.'
+            ));
 
             // Optional AI dispatch (BYO key).
             var providerSel = document.createElement('select');
@@ -1170,6 +1323,10 @@
                 toggleRow('Voice replies (text-to-speech)', state.settings.voiceEnabled, function (v) { state.settings.voiceEnabled = v; save(); }),
                 field('Assistant voice', voiceSel),
                 voiceTest,
+                ttsHead,
+                ttsWarn,
+                field('ElevenLabs API key (local only)', ttsKeyIn),
+                field('Voice ID (optional)', ttsVoiceIn),
                 toggleRow('Desktop notifications', state.settings.notifications, function (v) {
                     state.settings.notifications = v; save();
                     if (v && 'Notification' in window && Notification.permission !== 'granted') Notification.requestPermission();
@@ -1197,6 +1354,8 @@
                     state.settings.userName = nameIn.value.trim() || 'User';
                     state.settings.org = orgIn.value.trim();
                     state.settings.voiceName = voiceSel.value;
+                    state.settings.ttsKey = ttsKeyIn.value.trim();
+                    state.settings.ttsVoiceId = ttsVoiceIn.value.trim();
                     state.settings.aiProvider = providerSel.value;
                     state.settings.apiModel = modelIn.value.trim();
                     state.settings.apiKey = keyIn.value.trim();
@@ -1582,6 +1741,8 @@
         /* ---------- Wire up events ---------- */
         $('#addTaskBtn').addEventListener('click', addTask);
         $('#addProjectBtn').addEventListener('click', addProject);
+        $('#tabActive').addEventListener('click', function () { setProjectTab('active'); });
+        $('#tabDone').addEventListener('click', function () { setProjectTab('done'); });
         $('#sendBtn').addEventListener('click', sendMessage);
         $('#chatInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') sendMessage(); });
         $('#recBtn').addEventListener('click', toggleRecord);
@@ -1628,7 +1789,7 @@
         if (!state.settings.onboarded) setTimeout(runOnboarding, 500);
 
         // expose minimal debug hook (no eval, read-only)
-        window.J8NIX = { version: '1.1.1', reset: function () { localStorage.removeItem(STORE_KEY); location.reload(); } };
+        window.J8NIX = { version: '1.2.0', reset: function () { localStorage.removeItem(STORE_KEY); location.reload(); } };
     })();
     </script>
 </body>

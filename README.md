@@ -21,10 +21,23 @@ voice-ready assistant chat — all in one clean, light, responsive web app.
 - **Voice — "she has a voice"**
   - **Voice input** — dictate straight into Prompt Forge with the mic button, and the
     **“Hey J8NIX”** wake word can open Prompt Forge seeded with your spoken request
-    (Web Speech `SpeechRecognition`).
+    (Web Speech `SpeechRecognition`). Wake-word matching is tolerant — "Hey J8NIX",
+    "Hey Jay Eight Nix", "Hey Jenix" all trigger.
   - **Voice output** — J8NIX speaks confirmations and can **read back** a generated prompt
-    (`SpeechSynthesis`), preferring a warm female voice. Pick any installed voice in Settings.
+    (`SpeechSynthesis`). The brand is always pronounced **"Jay Eight Nix"** (the synthesizer
+    is fed the phonetic form, since browsers don't support SSML). She auto-picks the warmest,
+    most natural system voice available (neural / Enhanced / Premium) and speaks slightly
+    slower with a natural pitch; you can choose any installed voice in Settings.
+  - **Premium neural voice (optional)** — for a genuinely human, warm voice, paste your own
+    **ElevenLabs** API key in Settings; J8NIX then speaks through it (falling back to the
+    system voice on failure). See the honest voice-quality note below.
   - Record voice memos (MediaRecorder) with in-chat playback.
+- **Calm status color system** — psychologically-meaningful, distinct statuses across pills,
+  row stripes, and the progress ring: To-do = slate grey, In Progress / Active = blue
+  (momentum), Blocked = orange, At Risk = red, On Hold = amber, Done = green (completion).
+  Brand gold/navy stay as accents.
+- **Active / Done project tabs** — completing a project (status → Done) **auto-files** it under
+  the **Done** tab; one click **restores** it to Active. Persisted in `localStorage`.
 - **Chat** — assistant chat with history, file **drag-and-drop** upload, and notifications.
 - **Quick Actions** — Prompt Forge, new project / task / reminder, project audit, record memo.
 - **Drive mode** — geolocation speed detection flips the UI into a voice-first drive indicator.
@@ -89,13 +102,35 @@ app.listen(8787);
 Then point the front end at `/api/refine` (same-origin, no key in the client, add auth/rate-limiting
 as needed). The in-browser BYO-key path exists only for local experimentation.
 
+## Voice quality — honest note
+
+The built-in voice uses the browser's **Web Speech `SpeechSynthesis`** API. We do everything
+possible client-side to make it warm: J8NIX scores the device's installed voices and picks the
+most natural one (neural / "Enhanced" / "Premium" — e.g. Samantha (Enhanced), Ava, Google neural,
+Microsoft Aria/Jenny), pronounces the brand phonetically as "Jay Eight Nix", and speaks slightly
+slower with a natural pitch for a less robotic cadence.
+
+**But browser TTS is inherently limited** — even the best system voice is not truly human. A
+genuinely warm, human voice requires a **cloud neural TTS** (ElevenLabs, Google, Azure). Two paths:
+
+1. **Optional in-app hook (now):** paste your own **ElevenLabs** API key in
+   **Settings → premium neural voice**. J8NIX calls ElevenLabs directly and plays the audio,
+   falling back to the system voice on any error. This is gated behind a clear warning: a
+   client-side key is exposed to page scripts — use a limited key, never a production one.
+2. **Recommended production path:** a **backend proxy** that holds the TTS key server-side
+   (same shape as the Prompt Forge proxy above) and returns audio to the client. This keeps the
+   key secret and is the right way to ship a human voice to real users.
+
+`connect-src` is limited to `api.anthropic.com`, `api.openai.com`, and `api.elevenlabs.io` for
+these optional, key-gated paths only.
+
 ## Tech & security
 
 - **One standalone `index.html`** — no build step, no external JS dependencies (Google Fonts only).
 - Content injected via `textContent` / `createElement` — **no `innerHTML` of user data, no `eval`**.
 - Ships a **Content-Security-Policy** meta tag and is CSP-friendly. `connect-src` allows only
-  `api.anthropic.com` and `api.openai.com` so the optional, user-key-gated "Refine with AI" path
-  can run; nothing else is permitted to phone home.
+  `api.anthropic.com`, `api.openai.com`, and `api.elevenlabs.io` so the optional, user-key-gated
+  "Refine with AI" and premium-voice paths can run; nothing else is permitted to phone home.
 - **No service worker.** GitHub Pages org projects share one origin, so a stale SW can hijack
   sibling pages (lesson from the SHOMER deploy). To stay safe, on load the page actively
   **unregisters any service workers** and purges caches it doesn't own.
