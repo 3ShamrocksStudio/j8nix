@@ -1,76 +1,77 @@
-# J8NIX — Smart Operations OS, Only Smarter
+# J8NIX — 3Shamrocks Studio Command Center
 
-A single-file, dependency-free **Smart Operations OS** dashboard for running a studio's day:
-calendar, today's tasks, active projects, a daily-progress ring, live status, and a
-voice-ready assistant chat — all in one clean, light, responsive web app.
+A single-file, dependency-free **mission-control dashboard** for the whole 3Shamrocks studio.
+One place where Dave sees **every 3S project, its status, and exactly what's waiting on him** —
+everything clickable and actionable.
 
 **Live:** https://3shamrocksstudio.github.io/j8nix/
 
-> Built by [3Shamrocks Studio](https://github.com/3ShamrocksStudio). Brand accent `#f2c194` on a `#ccd8e5` canvas.
+> Built by [3Shamrocks Studio](https://github.com/3ShamrocksStudio). J8NIX™ gold wordmark on a deep-navy command canvas.
 
-## Features
+## The view
 
-- **🔥 Prompt Forge** — an AI command composer built right in. Type a request in plain language,
-  pick a target (Claude / Codex / Generic) and an optional project context, and Prompt Forge
-  converts it into a tight, token-efficient, well-engineered prompt — clear role, concise context,
-  explicit constraints, crisp output spec. Shows an estimated token count, a **Tighten further**
-  control (Standard → Tight → Tightest), and one-click **copy to clipboard**. Runs **fully offline**
-  — the conversion engine is a local heuristic/template engine, no API required.
-- **Editable tables** — add / edit (inline, click any cell) / delete tasks and projects; click status pills to cycle them.
-- **Daily progress ring** — live SVG ring + `4/9` fraction that recomputes as tasks complete.
-- **Voice — "she has a voice"**
-  - **Voice input** — dictate straight into Prompt Forge with the mic button, and the
-    **“Hey J8NIX”** wake word can open Prompt Forge seeded with your spoken request
-    (Web Speech `SpeechRecognition`). Wake-word matching is tolerant — "Hey J8NIX",
-    "Hey Jay Eight Nix", "Hey Jenix" all trigger.
-  - **Voice output** — J8NIX speaks confirmations and can **read back** a generated prompt
-    (`SpeechSynthesis`). The brand is always pronounced **"Jay Eight Nix"** (the synthesizer
-    is fed the phonetic form, since browsers don't support SSML). She auto-picks the warmest,
-    most natural system voice available (neural / Enhanced / Premium) and speaks slightly
-    slower with a natural pitch; you can choose any installed voice in Settings.
-  - **Premium neural voice (optional)** — for a genuinely human, warm voice, paste your own
-    **ElevenLabs** API key in Settings; J8NIX then speaks through it (falling back to the
-    system voice on failure). See the honest voice-quality note below.
-  - Record voice memos (MediaRecorder) with in-chat playback.
-- **Calm status color system** — psychologically-meaningful, distinct statuses across pills,
-  row stripes, and the progress ring: To-do = slate grey, In Progress / Active = blue
-  (momentum), Blocked = orange, At Risk = red, On Hold = amber, Done = green (completion).
-  Brand gold/navy stay as accents.
-- **Active / Done project tabs** — completing a project (status → Done) **auto-files** it under
-  the **Done** tab; one click **restores** it to Active. Persisted in `localStorage`.
-- **Chat** — assistant chat with history, file **drag-and-drop** upload, and notifications.
-- **Quick Actions** — Prompt Forge, new project / task / reminder, project audit, record memo.
-- **Drive mode** — geolocation speed detection flips the UI into a voice-first drive indicator.
-- **Persistence** — tasks, projects, chat and settings saved to `localStorage`.
-- **Onboarding + Settings** modal; responsive mobile layout with a bottom action bar.
+The key view fits **above the fold** on desktop and stacks cleanly on mobile — scroll only inside panels where it's logical.
 
-## Prompt Forge: offline vs. live AI dispatch
+- **⏳ Waiting on You** (left rail, priority queue) — each item shows the project, a priority dot,
+  the exact revisions/decisions expected, and a button that opens **the precise thing to review,
+  test or decide**. Highest priority on top. Add or clear items as you go.
+- **🗂 Projects** (grid) — every 3S project as a card with:
+  - a **live status pill** — 🟢 Live / 🔵 In Progress / 🟡 Waiting on Dave / ⚪ Backlog (click to cycle);
+  - the next action it needs;
+  - a working **Open / Test live** button to the **real URL** (and a **Kit** button where one exists).
+  - **Filter chips** (All / Live / In progress / Waiting / Backlog) with live counts.
+- **💬 Message Claude** (composer) — type a command, attach optional project context, hit **Copy**.
+  It formats a ready-to-paste message for Claude in chat. **Honest:** it does **not** silently send
+  to a live AI — that bridge needs a backend (see below). Labeled "copy & send · live bridge: future phase".
+- **Per-project detail** — click any card (or a waiting item's *Open project*) to see its
+  **ship checklist**: tick steps off, add/remove steps, jump to the live URL, or seed a Claude command about it.
 
-Prompt Forge has two paths:
+Everything persists to `localStorage`, so Dave's edits, statuses and checklists stick.
 
-1. **Generate + copy (default, offline).** The local engine builds the optimized prompt with no
-   network call and no API key. Copy it into Claude, Codex, or any tool. This is the recommended
-   path and always works.
-2. **Live "Refine with AI" (optional, advanced).** A pure front-end app **cannot securely call an
-   LLM API** — any key shipped in the page is visible to everyone. So this path is **off unless you
-   paste your *own* API key** into **Settings → Optional: live AI refine**. The key is stored only in
-   this browser's `localStorage` and is sent directly to the provider from your browser. It is gated
-   behind a clear in-app warning and the button is inert/disabled with no key. **No key is ever
-   hardcoded.**
+## Projects tracked (real, verified links)
 
-   > ⚠️ A client-side key is insecure — it's readable by any script on the page. Never use a
-   > production or shared key here.
+All product links were verified to return **HTTP 200**:
+
+| Project | Link |
+| --- | --- |
+| SHOMER · Forest | https://3shamrocksstudio.github.io/shomer-forest/ |
+| SHOMER · Beach | https://3shamrocksstudio.github.io/shomer-beach/ |
+| Milo | https://3shamrocksstudio.github.io/milo-app/ |
+| Chore Wars | https://3shamrocksstudio.github.io/chore-wars/ |
+| Senior Helper | https://3shamrocksstudio.github.io/senior-helper/ |
+| Trashure-Hunters · Site | https://3shamrocksstudio.github.io/th-website/ |
+| 3S Design System | https://3shamrocksstudio.github.io/3s-design-system/ |
+| Media Network Hub (+ Kit) | https://3shamrocksstudio.github.io/media-network-hub/ · [/kit.html](https://3shamrocksstudio.github.io/media-network-hub/kit.html) |
+| Gumroad product | https://markodave.gumroad.com/l/ruaqk |
+
+Plus in-flight items that ship before they have a public URL: **Trashure-Hunters MVP**
+(regenerate Anthropic key + add Firebase creds), **TH Movie** (script length ~55 vs ~90),
+**Cosmix** (pick direction A or C), and **IG Network** (create 4 accounts — paused on final names).
+
+## What's real vs. what needs a backend
+
+- **Real now:** every status, checklist, filter, waiting item and link works and persists in the browser.
+  Open/Test buttons open the real deployed products. The Message Claude composer formats and copies a
+  ready-to-paste command.
+- **Future phase (needs a backend):** a **live AI bridge** — Message Claude sending a command straight
+  to an LLM and showing the reply — cannot be done securely from a static page (any key shipped in the
+  page is public). The composer is therefore honest copy-to-paste today.
+
+### 🔥 Prompt Forge (bonus, carried over)
+
+Type a request in plain words; Forge converts it into a tight, token-efficient prompt (clear role,
+context, constraints, output spec) with a token estimate and **Tighten further** control. Runs **fully
+offline** — no API key required. An optional **Refine with AI** path is off unless you paste your *own*
+key in Settings (stored only in this browser, gated behind a clear warning).
 
 ### Recommended production path — backend proxy
 
-For a real deployment, **do not** put the key in the browser. Stand up a small backend proxy that
-holds the key server-side and forwards requests:
+For a real live-AI deployment, **do not** put the key in the browser. Stand up a small proxy that holds
+the key server-side and forwards requests:
 
 ```
-Browser (no key)  ──►  Your proxy (holds ANTHROPIC_API_KEY / OPENAI_API_KEY)  ──►  LLM API
+Browser (no key)  ──►  Your proxy (holds ANTHROPIC_API_KEY)  ──►  Claude API
 ```
-
-Minimal example (Node/Express, Anthropic):
 
 ```js
 // server.js — key lives in the environment, never in the client
@@ -78,7 +79,7 @@ import express from "express";
 const app = express();
 app.use(express.json());
 
-app.post("/api/refine", async (req, res) => {
+app.post("/api/claude", async (req, res) => {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -89,7 +90,6 @@ app.post("/api/refine", async (req, res) => {
     body: JSON.stringify({
       model: "claude-opus-4-8",
       max_tokens: 1024,
-      system: "You are a prompt engineer. Return only the improved prompt.",
       messages: [{ role: "user", content: req.body.prompt }],
     }),
   });
@@ -99,59 +99,32 @@ app.post("/api/refine", async (req, res) => {
 app.listen(8787);
 ```
 
-Then point the front end at `/api/refine` (same-origin, no key in the client, add auth/rate-limiting
-as needed). The in-browser BYO-key path exists only for local experimentation.
+Then point the composer at `/api/claude` (same-origin, no key in the client, add auth + rate-limiting).
 
-## Voice quality — honest note
+## Voice (optional)
 
-The built-in voice uses the browser's **Web Speech `SpeechSynthesis`** API. We do everything
-possible client-side to make it warm: J8NIX scores the device's installed voices and picks the
-most natural one (neural / "Enhanced" / "Premium" — e.g. Samantha (Enhanced), Ava, Google neural,
-Microsoft Aria/Jenny), pronounces the brand phonetically as "Jay Eight Nix", and speaks slightly
-slower with a natural pitch for a less robotic cadence.
-
-**But browser TTS is inherently limited** — even the best system voice is not truly human. A
-genuinely warm, human voice requires a **cloud neural TTS** (ElevenLabs, Google, Azure). Two paths:
-
-1. **Optional in-app hook (now):** paste your own **ElevenLabs** API key in
-   **Settings → premium neural voice**. J8NIX calls ElevenLabs directly and plays the audio,
-   falling back to the system voice on any error. This is gated behind a clear warning: a
-   client-side key is exposed to page scripts — use a limited key, never a production one.
-2. **Recommended production path:** a **backend proxy** that holds the TTS key server-side
-   (same shape as the Prompt Forge proxy above) and returns audio to the client. This keeps the
-   key secret and is the right way to ship a human voice to real users.
-
-`connect-src` is limited to `api.anthropic.com`, `api.openai.com`, and `api.elevenlabs.io` for
-these optional, key-gated paths only.
+The **🔊 Brief** button reads back what's waiting on you using the browser's `SpeechSynthesis`
+(brand pronounced "Jay Eight Nix"). For a genuinely human voice, paste your own **ElevenLabs** key in
+Settings — gated behind a clear warning (a client-side key is exposed to page scripts; the production-safe
+path is a backend proxy). `connect-src` is limited to `api.anthropic.com`, `api.openai.com`, and
+`api.elevenlabs.io` for these optional, key-gated paths only.
 
 ## Tech & security
 
 - **One standalone `index.html`** — no build step, no external JS dependencies (Google Fonts only).
 - Content injected via `textContent` / `createElement` — **no `innerHTML` of user data, no `eval`**.
-- Ships a **Content-Security-Policy** meta tag and is CSP-friendly. `connect-src` allows only
-  `api.anthropic.com`, `api.openai.com`, and `api.elevenlabs.io` so the optional, user-key-gated
-  "Refine with AI" and premium-voice paths can run; nothing else is permitted to phone home.
-- **No service worker.** GitHub Pages org projects share one origin, so a stale SW can hijack
-  sibling pages (lesson from the SHOMER deploy). To stay safe, on load the page actively
-  **unregisters any service workers** and purges caches it doesn't own.
+- Ships a strict **Content-Security-Policy** meta tag; nothing phones home except the optional key-gated paths.
+- **No service worker.** GitHub Pages org projects share one origin, so a stale SW can hijack sibling
+  pages — on load the page actively **unregisters service workers** and purges caches it doesn't own.
+- **WCAG AA** — focus-visible rings, focus-trapped modal, ARIA labels, keyboard-operable controls,
+  reduced-motion support, responsive down to 375px.
 
 ## Run locally
 
 ```bash
-# any static server works, e.g.
-python3 -m http.server 8731
-# then open http://localhost:8731/index.html
+python3 -m http.server 8123
+# then open http://localhost:8123/index.html
 ```
-
-Voice, microphone and geolocation features require a real browser (and HTTPS or `localhost`)
-and user permission; they degrade gracefully when unavailable.
-
-## Custom domain (future)
-
-A future custom-domain option is **`j8nix.3shamrocks.studio`**. To enable it later:
-add a `CNAME` file containing that hostname, point a DNS `CNAME` record at
-`3shamrocksstudio.github.io`, and set the domain under the repo's Pages settings.
-(No DNS is configured yet.)
 
 ## License
 

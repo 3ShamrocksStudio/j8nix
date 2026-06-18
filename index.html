@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="J8NIX — Smart Operations OS. Calendar, tasks, projects, voice assistant and live status in one clean workspace.">
-    <meta name="theme-color" content="#ccd8e5">
-    <!-- CSP: no eval, no remote script. Allow inline styles/scripts (single-file app) + Google Fonts + data/blob media. -->
-    <!-- connect-src lists only the OPTIONAL, user-key-gated endpoints: Anthropic/OpenAI for
-         Prompt Forge "Refine with AI", and ElevenLabs for the optional premium neural voice.
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="J8NIX — Dave Markovich's 3Shamrocks Studio command center. Every project, its status, and exactly what's waiting on you — clickable and actionable.">
+    <meta name="theme-color" content="#0f2235">
+    <!-- CSP: no eval, no remote scripts. Inline style/script (single-file app) + Google Fonts.
+         connect-src is limited to the OPTIONAL, user-key-gated endpoints used only by the
+         "Refine with AI" path (Anthropic/OpenAI) and the optional ElevenLabs voice.
          No key is ever shipped in this file. -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: data:; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.anthropic.com https://api.openai.com https://api.elevenlabs.io; object-src 'none'; base-uri 'none'; form-action 'none'">
-    <title>J8NIX™ — Smart Operations OS, Only Smarter</title>
+    <title>J8NIX™ — 3Shamrocks Studio Command Center</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,493 +18,320 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #ccd8e5;
+            --bg: #0d1c2b;               /* command-center canvas (deep navy) */
+            --bg-2: #11283c;
             --panel-bg: #ffffff;
-            --accent: #f2c194;
+            --header-bg: #0a1622;        /* dark — the J8NIX gold wordmark lives here */
+            --header-bg-2: #11283c;
+            --accent: #f2c194;           /* brand gold */
             --accent-deep: #e0a878;
-            --neutral: #586475;
-            --secondary: #5f7590;
-            --success: #7bb48b;
-            --urgent: #e16a66;
             --text: #102a43;
-            --text-sub: #586475;
-            --border: #e0e7f0;
-            --shadow: 0 4px 20px rgba(16,42,67,0.07);
+            --text-sub: #5a6b80;
+            --neutral: #586475;
+            --border: #e3e9f1;
+            --shadow: 0 6px 24px rgba(0,0,0,.16);
             --radius: 16px;
+            /* status system */
+            --st-live: #2f9e63;          --st-live-bg: #e6f5ec;
+            --st-prog: #2f74c0;          --st-prog-bg: #e4eefb;
+            --st-wait: #d4892a;          --st-wait-bg: #fcf1e1;
+            --st-back: #76859a;          --st-back-bg: #eef2f7;
+            /* priority */
+            --pri-high: #e05650;         --pri-med: #d4892a;          --pri-low: #76859a;
         }
         * { box-sizing: border-box; }
         html, body { height: 100%; }
         body {
             margin: 0;
             font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            font-size: 14px;
-            line-height: 1.5;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+            background: radial-gradient(1200px 600px at 80% -10%, #16344c 0%, var(--bg) 55%);
+            color: #e8eef5;
+            font-size: 14px; line-height: 1.5;
+            display: flex; flex-direction: column; height: 100vh;
+            overflow: hidden;            /* NO PAGE SCROLL — key view above the fold; panels scroll internally */
         }
-        /* Accessible focus ring everywhere */
-        :focus-visible { outline: 3px solid var(--neutral); outline-offset: 2px; border-radius: 6px; }
-        .skip-link {
-            position: absolute; left: -999px; top: 8px; z-index: 100;
-            background: var(--text); color: #fff; padding: 10px 16px; border-radius: 8px;
-        }
+        :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+        .skip-link { position: absolute; left: -999px; top: 8px; z-index: 100; background: #fff; color: var(--text); padding: 10px 16px; border-radius: 8px; font-weight: 700; }
         .skip-link:focus { left: 8px; }
 
+        /* ---------------- Header (DARK — J8NIX gold logo) ---------------- */
         header {
-            background: #fff;
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            border-bottom: 1px solid var(--border);
-            box-shadow: 0 2px 8px rgba(16,42,67,0.05);
-            position: sticky; top: 0; z-index: 20;
-            flex-wrap: wrap;
+            flex: 0 0 auto;
+            background: linear-gradient(120deg, var(--header-bg), var(--header-bg-2));
+            color: #eaf1f8; padding: 10px 18px;
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            box-shadow: 0 2px 16px rgba(0,0,0,.35); z-index: 20; flex-wrap: wrap;
+            border-bottom: 1px solid rgba(242,193,148,.18);
         }
-        .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
-        .logo { height: 40px; width: auto; display: block; }
-        .tagline-img { height: 14px; width: auto; display: block; opacity: 0.85; }
-        .tagline-text {
-            font-size: 11px; font-weight: 700; letter-spacing: 1.4px;
-            color: var(--neutral); text-transform: uppercase;
-        }
-        .header-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-        .user-info { font-weight: 600; color: var(--neutral); font-size: 13px; }
-        .badge {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;
-            background: #eef3f8; color: var(--neutral);
-        }
-        .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
-        .badge.drive-on { background: #fdeee0; color: var(--accent-deep); }
-        .badge.drive-on .dot { background: var(--accent-deep); animation: pulse 1.2s infinite; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+        .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .logo { height: 32px; width: auto; display: block; }
+        .brand .tm { font-size: 10px; font-weight: 800; color: var(--accent); align-self: flex-start; margin: 2px 0 0 -6px; }
+        .brand-sub { font-size: 11px; font-weight: 700; letter-spacing: 1.2px; color: var(--accent); text-transform: uppercase; }
+        .brand-divider { width: 1px; height: 28px; background: rgba(255,255,255,.16); margin: 0 4px; }
+        .user-chip { display: flex; align-items: center; gap: 10px; }
+        /* 3Shamrocks mark — ALWAYS on a light badge (brand rule). Never fabricated. */
+        .logo-badge { display: inline-flex; align-items: center; justify-content: center; background: #fff; border-radius: 10px; padding: 5px 9px; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+        .logo-badge img { display: block; }
+        .user-meta { line-height: 1.2; }
+        .user-meta .nm { font-weight: 700; font-size: 13px; color: #fff; }
+        .user-meta .sub { font-size: 11px; color: #9fb4c9; }
+        .header-right { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+        .badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 700; background: rgba(255,255,255,.08); color: #cfe0f0; }
+        .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--st-live); }
+        .hdr-btn { background: rgba(255,255,255,.08); color: #eaf1f8; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; padding: 8px 13px; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 6px; }
+        .hdr-btn:hover { background: rgba(255,255,255,.16); }
+        .hdr-btn.gold { background: var(--accent); color: #4a3216; border-color: transparent; }
+        .hdr-btn.gold:hover { filter: brightness(1.05); }
 
+        /* ---------------- Workspace grid (above the fold) ---------------- */
         .workspace {
-            flex: 1;
+            flex: 1 1 auto; min-height: 0;
             display: grid;
-            grid-template-columns: 280px minmax(0,1fr) 340px;
-            gap: 16px;
-            padding: 16px;
-            align-items: start;
+            grid-template-columns: minmax(330px, 372px) minmax(0, 1fr);
+            grid-template-rows: minmax(0, 1fr) clamp(150px, 22vh, 196px);
+            grid-template-areas: "waiting projects" "waiting claude";
+            gap: 14px; padding: 14px;
         }
-        .panel {
-            background: var(--panel-bg);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-        .panel-header {
-            padding: 14px 18px;
-            font-size: 12px; font-weight: 800; letter-spacing: 0.6px;
-            text-transform: uppercase; color: var(--neutral);
-            border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between; gap: 8px;
-        }
-        .panel-body { padding: 16px 18px; }
-        .table-wrap { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
-        th { font-weight: 700; color: var(--neutral); background: #f8fafd; white-space: nowrap; position: sticky; top: 0; }
-        tbody tr:hover { background: #fbfcfe; }
-        td[contenteditable="true"] { cursor: text; border-radius: 6px; }
-        td[contenteditable="true"]:focus { background: #fff7ee; outline: 2px solid var(--accent); }
-        .row-actions { white-space: nowrap; }
-        .icon-btn {
-            background: transparent; border: none; cursor: pointer; padding: 4px 7px;
-            border-radius: 8px; font-size: 14px; color: var(--secondary); line-height: 1;
-        }
-        .icon-btn:hover { background: #eef3f8; color: var(--urgent); }
+        .area-waiting  { grid-area: waiting; }
+        .area-projects { grid-area: projects; }
+        .area-claude   { grid-area: claude; }
 
-        button {
-            cursor: pointer; border: none; border-radius: 999px;
-            padding: 9px 16px; font-weight: 700; font-size: 13px;
-            font-family: inherit; transition: transform .08s ease, filter .15s ease;
+        .panel { background: var(--panel-bg); border-radius: var(--radius); box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden; min-height: 0; color: var(--text); }
+        .panel-header {
+            flex: 0 0 auto; padding: 12px 16px; font-size: 12px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--neutral);
+            border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 8px;
         }
+        .panel-header .ph-title { display: flex; align-items: center; gap: 8px; }
+        .panel-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; }
+        .count-chip { background: var(--header-bg); color: var(--accent); border-radius: 999px; padding: 2px 9px; font-size: 11px; font-weight: 800; }
+
+        button { cursor: pointer; border: none; border-radius: 999px; padding: 9px 15px; font-weight: 700; font-size: 13px; font-family: inherit; transition: transform .08s ease, filter .15s ease, background .15s ease; }
         button:active { transform: translateY(1px); }
-        .primary { background: var(--accent); color: #5a3d1e; }
+        .primary { background: var(--accent); color: #4a3216; }
         .primary:hover { filter: brightness(1.05); }
         .ghost { background: #eef3f8; color: var(--neutral); }
         .ghost:hover { background: #e3ebf3; }
+        button[disabled] { opacity: .5; cursor: not-allowed; }
+        .icon-btn { background: transparent; border: none; cursor: pointer; padding: 4px 7px; border-radius: 8px; font-size: 14px; color: var(--neutral); line-height: 1; }
+        .icon-btn:hover { background: #eef3f8; color: var(--text); }
 
-        .status-pill {
-            padding: 4px 11px; border-radius: 999px; font-size: 11px; font-weight: 800;
-            cursor: pointer; border: none; letter-spacing: .3px; text-transform: uppercase;
+        /* ---------------- Waiting-on-You rail ---------------- */
+        .wait-list { display: flex; flex-direction: column; }
+        .wait-item { padding: 13px 15px; border-bottom: 1px solid var(--border); }
+        .wait-item:last-child { border-bottom: none; }
+        .wait-top { display: flex; align-items: center; gap: 9px; }
+        .pri-dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; box-shadow: 0 0 0 3px rgba(0,0,0,.04); }
+        .pri-high { background: var(--pri-high); } .pri-med { background: var(--pri-med); } .pri-low { background: var(--pri-low); }
+        .wait-proj { font-weight: 800; font-size: 13.5px; color: var(--text); flex: 1 1 auto; min-width: 0; }
+        .wait-tag { font-size: 10px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; }
+        .wait-do { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+        .wait-do li { display: flex; gap: 7px; font-size: 12.5px; color: var(--text-sub); align-items: flex-start; }
+        .wait-do li::before { content: "▸"; color: var(--accent-deep); font-weight: 800; flex: 0 0 auto; }
+        .wait-note { font-size: 11.5px; color: var(--st-wait); font-weight: 700; margin-top: 6px; }
+        .wait-actions { display: flex; gap: 8px; margin-top: 11px; flex-wrap: wrap; }
+        .wait-actions a, .wait-actions button { font-size: 12px; padding: 7px 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; }
+        .link-btn { background: var(--accent); color: #4a3216; font-weight: 700; }
+        .link-btn:hover { filter: brightness(1.05); }
+        .detail-btn { background: #eef3f8; color: var(--neutral); font-weight: 700; }
+        .detail-btn:hover { background: #e3ebf3; }
+
+        /* ---------------- Projects grid ---------------- */
+        .pulse { display: flex; gap: 6px; flex-wrap: wrap; }
+        .pulse-chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: #fff; color: var(--neutral); border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 800; cursor: pointer; font-family: inherit; letter-spacing: .2px; }
+        .pulse-chip:hover { background: #f5f8fc; }
+        .pulse-chip.on { background: var(--header-bg); color: #fff; border-color: var(--header-bg); }
+        .pulse-chip .pc-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .proj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 12px; padding: 14px; }
+        .proj-card {
+            border: 1px solid var(--border); border-radius: 14px; padding: 13px 14px 12px; background: #fff;
+            display: flex; flex-direction: column; gap: 9px; position: relative; overflow: hidden;
+            border-left: 4px solid var(--st-back); transition: box-shadow .15s ease, transform .08s ease;
         }
+        .proj-card:hover { box-shadow: 0 8px 22px rgba(16,42,67,.12); }
+        .proj-card.s-live { border-left-color: var(--st-live); } .proj-card.s-prog { border-left-color: var(--st-prog); }
+        .proj-card.s-wait { border-left-color: var(--st-wait); } .proj-card.s-back { border-left-color: var(--st-back); }
+        .pc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+        .pc-name { font-weight: 800; font-size: 13.5px; color: var(--text); line-height: 1.25; }
+        .pc-cat { font-size: 10.5px; color: var(--text-sub); font-weight: 600; }
+        .status-pill { padding: 4px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 800; cursor: pointer; border: none; letter-spacing: .3px; text-transform: uppercase; white-space: nowrap; font-family: inherit; }
+        .sp-live { background: var(--st-live-bg); color: var(--st-live); } .sp-prog { background: var(--st-prog-bg); color: var(--st-prog); }
+        .sp-wait { background: var(--st-wait-bg); color: var(--st-wait); } .sp-back { background: var(--st-back-bg); color: var(--st-back); }
+        .pc-next { font-size: 12px; color: var(--text-sub); flex: 1 1 auto; }
+        .pc-next b { color: var(--st-wait); }
+        .pc-actions { display: flex; gap: 7px; margin-top: 2px; }
+        .pc-actions a, .pc-actions button { flex: 1; text-align: center; font-size: 12px; padding: 8px 6px; border-radius: 9px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+        .pc-open { background: var(--header-bg); color: #fff; font-weight: 700; }
+        .pc-open:hover { background: #16344c; }
+        .pc-open.disabled { background: #eef2f7; color: #9aa7b6; pointer-events: none; }
+        .pc-details { background: #eef3f8; color: var(--neutral); font-weight: 700; }
+        .pc-details:hover { background: #e3ebf3; }
+        .pc-kit { flex: 0 0 auto; }
 
-        /* Calendar */
-        .cal-head { display:flex; align-items:center; justify-content:space-between; padding: 12px 16px 4px; }
-        .cal-title { font-weight: 800; font-size: 14px; }
-        .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; padding: 8px 14px 16px; }
-        .cal-grid .dow { font-size: 10px; font-weight: 800; color: var(--secondary); text-align: center; padding: 4px 0; text-transform: uppercase; }
-        .cal-cell {
-            aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
-            font-size: 12px; border-radius: 8px; color: var(--text); cursor: pointer; position: relative;
-        }
-        .cal-cell:hover { background: #eef3f8; }
-        .cal-cell.empty { cursor: default; }
-        .cal-cell.today { background: var(--accent); color: #5a3d1e; font-weight: 800; }
-        .cal-cell.has-task::after { content:""; position:absolute; bottom:4px; width:5px; height:5px; border-radius:50%; background: var(--urgent); }
+        /* ---------------- Message Claude composer ---------------- */
+        .claude-body { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; flex: 1 1 auto; min-height: 0; }
+        .claude-row { display: flex; gap: 8px; align-items: stretch; flex: 1 1 auto; min-height: 0; }
+        #claudeInput { flex: 1 1 auto; resize: none; border: 1px solid var(--border); border-radius: 12px; padding: 11px 13px; font-family: inherit; font-size: 13.5px; color: var(--text); min-height: 0; }
+        #claudeInput:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+        .claude-side { display: flex; flex-direction: column; gap: 7px; width: 168px; flex: 0 0 auto; }
+        .claude-side select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 12.5px; color: var(--text); background: #fff; }
+        .claude-btns { display: flex; gap: 7px; }
+        .claude-btns button { flex: 1; padding: 9px 6px; }
+        .claude-note { font-size: 11px; color: var(--neutral); display: flex; align-items: center; gap: 6px; }
+        .claude-note b { color: var(--st-wait); }
 
-        /* Progress ring */
-        .progress-wrap { display:flex; flex-direction: column; align-items: center; padding: 8px 0 18px; }
-        .progress-circle { width: 168px; height: 168px; transform: rotate(-90deg); }
-        .progress-center { text-align:center; margin-top: -116px; margin-bottom: 70px; pointer-events:none; }
-        .progress-center .big { font-size: 40px; font-weight: 800; color: var(--accent-deep); line-height: 1; }
-        .progress-center .sub { font-size: 12px; color: var(--neutral); margin-top: 4px; }
-
-        .stat-grid { display:grid; grid-template-columns: repeat(3,1fr); padding: 22px 16px; text-align:center; gap: 8px; }
-        .stat-grid .n { font-size: 26px; font-weight: 800; color: var(--text); }
-        .stat-grid .l { font-size: 12px; color: var(--neutral); }
-        .live-line { display:flex; align-items:center; gap:8px; padding: 10px 18px; border-top: 1px solid var(--border); font-size: 12px; color: var(--neutral); }
-
-        .qa-list { display:flex; flex-direction: column; gap: 9px; padding: 16px; }
-        .qa-list button { width: 100%; text-align: left; padding: 11px 16px; }
-
-        /* Chat */
-        .chat-area { margin: 0 16px 16px; display: flex; flex-direction: column; min-height: 280px; }
-        .chat-feed {
-            flex: 1; padding: 18px; overflow-y: auto; background: #f8fafd;
-            display: flex; flex-direction: column; gap: 10px; min-height: 140px; max-height: 320px;
-        }
-        .chat-feed.dragover { outline: 3px dashed var(--accent); outline-offset: -10px; background: #fff7ee; }
-        .message { padding: 12px 16px; border-radius: 16px; max-width: 78%; font-size: 13px; word-wrap: break-word; overflow-wrap: anywhere; }
-        .message.system { background: #fff; border: 1px solid var(--border); align-self: flex-start; border-bottom-left-radius: 4px; }
-        .message.user { background: var(--accent); color: #5a3d1e; align-self: flex-end; border-bottom-right-radius: 4px; }
-        .message .meta { font-size: 10px; opacity: .6; margin-top: 5px; }
-        .message audio { width: 240px; max-width: 100%; margin-top: 6px; display:block; }
-        .message .file-chip { display:flex; align-items:center; gap:8px; font-weight:700; }
-        .chat-input-row { padding: 12px; background: #fff; border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-        .chat-input-row input[type=text] {
-            flex: 1; min-width: 140px; padding: 13px 18px; border: 1px solid var(--border);
-            border-radius: 999px; font-size: 14px; font-family: inherit; color: var(--text);
-        }
-        .chat-input-row input[type=text]:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
-        .rec-dot { display:inline-block; width:9px; height:9px; border-radius:50%; background: var(--urgent); margin-right:6px; animation: pulse .9s infinite; }
-        button.listening { background: var(--urgent); color: #fff; }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(16,42,67,.5); backdrop-filter: blur(2px);
-            display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px;
-        }
+        /* ---------------- Modal ---------------- */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(8,18,28,.62); backdrop-filter: blur(2px); display: none; align-items: center; justify-content: center; z-index: 80; padding: 16px; }
         .modal-overlay.open { display: flex; }
-        .modal {
-            background: #fff; border-radius: 20px; max-width: 520px; width: 100%;
-            max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 60px rgba(16,42,67,.3);
-        }
-        .modal-head { padding: 20px 24px 8px; display:flex; align-items:center; justify-content: space-between; }
+        .modal { background: #fff; border-radius: 20px; max-width: 560px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 60px rgba(0,0,0,.4); color: var(--text); }
+        .modal.wide { max-width: 800px; }
+        .modal-head { padding: 20px 24px 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
         .modal-head h2 { margin: 0; font-size: 20px; }
-        .modal-body { padding: 8px 24px 24px; }
+        .modal-body { padding: 8px 24px 22px; }
+        .modal-foot { padding: 0 24px 24px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
         .field { margin-bottom: 16px; }
-        .field label { display:block; font-weight: 700; font-size: 13px; margin-bottom: 6px; color: var(--neutral); }
-        .field input, .field select {
-            width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 10px;
-            font-size: 14px; font-family: inherit; color: var(--text); background:#fff;
-        }
-        .switch-row { display:flex; align-items:center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .field label { display: block; font-weight: 700; font-size: 13px; margin-bottom: 6px; color: var(--neutral); }
+        .field input, .field select, .field textarea { width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; font-family: inherit; color: var(--text); background: #fff; }
+        .field textarea { resize: vertical; min-height: 88px; line-height: 1.5; }
+        .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+        .switch-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
         .switch-row:last-child { border-bottom: none; }
-        .modal-foot { padding: 0 24px 24px; display:flex; gap: 10px; justify-content: flex-end; }
-        .onboard-step { text-align:center; padding: 8px 0 0; }
-        .onboard-step img { height: 44px; margin-bottom: 8px; }
 
-        /* Toast notifications */
-        .toast-stack { position: fixed; bottom: 20px; right: 20px; display:flex; flex-direction: column; gap: 10px; z-index: 60; max-width: 320px; }
-        .toast {
-            background: var(--text); color: #fff; padding: 13px 16px; border-radius: 12px;
-            font-size: 13px; box-shadow: 0 10px 30px rgba(16,42,67,.3); animation: slidein .25s ease;
-        }
-        .toast.success { background: #35804e; }
-        .toast.urgent { background: #c94642; }
-        @keyframes slidein { from{transform: translateY(12px); opacity:0} to{transform:none; opacity:1} }
+        /* project detail modal */
+        .pd-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+        .pd-link { font-size: 12.5px; color: var(--st-prog); font-weight: 700; word-break: break-all; }
+        .ship-label { font-size: 11px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: var(--neutral); margin: 6px 0 8px; }
+        .ship-list { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-direction: column; gap: 4px; }
+        .ship-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; }
+        .ship-item.done { background: #f3f8f4; }
+        .ship-item input[type=checkbox] { width: 18px; height: 18px; flex: 0 0 auto; }
+        .ship-item .ship-text { flex: 1 1 auto; font-size: 13px; color: var(--text); }
+        .ship-item.done .ship-text { text-decoration: line-through; color: var(--neutral); }
+        .ship-add { display: flex; gap: 8px; }
+        .ship-add input { flex: 1; padding: 9px 12px; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 13px; }
 
-        /* Brand trademark mark */
-        .brand .tm { font-size: 11px; font-weight: 800; color: var(--accent-deep); align-self: flex-start; margin: 2px 0 0 -8px; }
-
-        /* Persistent footer / copyright credit */
-        .site-footer {
-            margin: 4px 16px 16px; padding: 16px 20px; gap: 14px;
-            display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
-            text-align: center; border-top: 1px solid var(--border);
-            color: var(--neutral); font-size: 12px; line-height: 1.5;
-        }
-        .site-footer img { height: 22px; width: auto; display: block; opacity: .92; }
-        .site-footer .copy strong { color: var(--text); }
-        .site-footer .copy .tm { color: var(--accent-deep); font-weight: 800; }
-        .about-box {
-            margin-top: 8px; padding: 14px 16px; border: 1px solid var(--border);
-            border-radius: 12px; background: #f8fafd; text-align: center;
-        }
-        .about-box img { height: 24px; width: auto; opacity: .92; margin-bottom: 8px; }
+        /* about / forge */
+        .about-box { margin-top: 8px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; background: #f8fafd; text-align: center; }
+        .about-box .logo-badge { margin-bottom: 10px; box-shadow: none; }
         .about-box .copy { font-size: 12px; color: var(--neutral); font-weight: 600; }
         .about-box .copy .tm { color: var(--accent-deep); font-weight: 800; }
-
-        /* ---------- Prompt Forge ---------- */
-        .modal.wide { max-width: 780px; }
-        .field textarea {
-            width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 10px;
-            font-size: 14px; font-family: inherit; color: var(--text); background: #fff;
-            resize: vertical; min-height: 88px; line-height: 1.5;
-        }
-        .field textarea:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+        .warn-box { border: 1px solid #f0c9a0; background: #fff7ee; color: #7a4a1e; border-radius: 12px; padding: 12px 14px; font-size: 12.5px; line-height: 1.5; margin-bottom: 14px; }
+        .warn-box strong { color: #5a3d1e; }
         .forge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .forge-grid .field { margin-bottom: 0; }
-        .forge-input-wrap { position: relative; }
-        .mic-btn {
-            position: absolute; right: 8px; bottom: 8px; padding: 7px 11px; font-size: 13px;
-            background: #eef3f8; color: var(--neutral); border-radius: 999px;
-        }
-        .mic-btn:hover { background: #e3ebf3; }
-        .mic-btn.listening { background: var(--urgent); color: #fff; }
-        .forge-label {
-            font-size: 11px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase;
-            color: var(--secondary); margin: 16px 0 6px;
-        }
-        .forge-out {
-            width: 100%; min-height: 150px; padding: 13px 15px; border: 1px solid var(--border);
-            border-radius: 10px; font-family: 'JetBrains Mono', ui-monospace, monospace;
-            font-size: 12.5px; line-height: 1.55; color: var(--text); background: #f8fafd;
-            resize: vertical; white-space: pre-wrap;
-        }
+        .forge-label { font-size: 11px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: var(--neutral); margin: 16px 0 6px; }
+        .forge-out { width: 100%; min-height: 140px; padding: 13px 15px; border: 1px solid var(--border); border-radius: 10px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12.5px; line-height: 1.55; color: var(--text); background: #f8fafd; resize: vertical; white-space: pre-wrap; }
         .forge-out:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
         .forge-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 11px 0; }
-        .token-badge {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: #eef3f8; color: var(--neutral); font-weight: 800; font-size: 12px;
-            padding: 5px 12px; border-radius: 999px;
-        }
+        .token-badge { display: inline-flex; align-items: center; gap: 6px; background: #eef3f8; color: var(--neutral); font-weight: 800; font-size: 12px; padding: 5px 12px; border-radius: 999px; }
         .token-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-deep); }
-        .forge-level { font-size: 12px; font-weight: 700; color: var(--secondary); }
+        .forge-level { font-size: 12px; font-weight: 700; color: var(--neutral); }
         .forge-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-        .warn-box {
-            border: 1px solid #f0c9a0; background: #fff7ee; color: #7a4a1e; border-radius: 12px;
-            padding: 12px 14px; font-size: 12.5px; line-height: 1.5; margin-bottom: 14px;
-        }
-        .warn-box strong { color: #5a3d1e; }
         .forge-note { font-size: 12px; color: var(--neutral); margin: 6px 0 0; }
-        button[disabled] { opacity: .5; cursor: not-allowed; }
-        button[disabled]:active { transform: none; }
-        /* Forge starter chips — first-use discoverability */
         .forge-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 2px; }
-        .chip {
-            border: 1px solid var(--border); background: #fff; color: var(--neutral);
-            border-radius: 999px; padding: 7px 13px; font-size: 12.5px; font-weight: 700;
-            cursor: pointer; font-family: inherit;
-        }
-        .chip:hover { background: #eef3f8; border-color: #cdd8e5; color: var(--text); }
-        @media (max-width: 640px) { .forge-grid { grid-template-columns: 1fr; } }
+        .chip { border: 1px solid var(--border); background: #fff; color: var(--neutral); border-radius: 999px; padding: 7px 13px; font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit; }
+        .chip:hover { background: #eef3f8; color: var(--text); }
 
-        /* Empty states for tables */
-        .empty-row td { padding: 30px 16px; }
-        tbody tr.empty-row:hover { background: transparent; }
-        .empty-state { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
-        .empty-state .em-emoji { font-size: 26px; line-height: 1; }
-        .empty-state .em-msg { font-size: 13px; color: var(--neutral); }
+        /* toasts */
+        .toast-stack { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 90; max-width: 330px; }
+        .toast { background: #14283b; color: #fff; padding: 13px 16px; border-radius: 12px; font-size: 13px; box-shadow: 0 10px 30px rgba(0,0,0,.35); animation: slidein .25s ease; }
+        .toast.success { background: #2f8f5b; } .toast.urgent { background: #c94642; }
+        @keyframes slidein { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
 
-        /* Project tabs (Active / Done) */
-        .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .proj-tabs { display: inline-flex; background: #eef3f8; border-radius: 999px; padding: 3px; }
-        .tab-btn {
-            border: none; background: transparent; color: var(--neutral); cursor: pointer;
-            font-family: inherit; font-weight: 800; font-size: 11px; letter-spacing: .4px;
-            text-transform: uppercase; padding: 6px 12px; border-radius: 999px;
-        }
-        .tab-btn.on { background: #fff; color: var(--text); box-shadow: 0 1px 4px rgba(16,42,67,.12); }
+        .empty-state { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 30px 16px; color: var(--neutral); }
+        .empty-state .em-emoji { font-size: 26px; }
 
-        /* 3Shamrocks logo always sits on a dark-grey badge (brand rule) */
-        .logo-badge {
-            display: inline-flex; align-items: center; justify-content: center;
-            background: #2f343d; border-radius: 12px; padding: 10px 14px;
-            box-shadow: 0 2px 8px rgba(16,42,67,.14);
+        /* ---------------- Mobile ---------------- */
+        @media (max-width: 980px) {
+            body { overflow: auto; height: auto; min-height: 100vh; }
+            .workspace { display: flex; flex-direction: column; gap: 12px; padding: 12px; }
+            .area-waiting .panel-scroll { max-height: 46vh; }
+            .area-projects .panel-scroll { max-height: none; }
+            .area-claude { min-height: 220px; }
+            .claude-row { flex-direction: column; }
+            .claude-side { width: 100%; flex-direction: row; flex-wrap: wrap; }
+            .claude-side select { flex: 1 1 140px; } .claude-side button { flex: 1 1 120px; width: auto; }
+            #claudeInput { min-height: 80px; }
         }
-        .logo-badge img { display: block; }
-        .about-box .logo-badge { margin-bottom: 10px; }
-
-        /* Mobile action bar */
-        .mobile-bar { display: none; }
-
-        @media (max-width: 1080px) {
-            .workspace { grid-template-columns: 1fr; }
-            .progress-circle { width: 150px; height: 150px; }
-            .progress-center { margin-top: -104px; margin-bottom: 60px; }
+        @media (max-width: 600px) {
+            .user-meta, .brand-divider, .brand-sub { display: none; }
+            .forge-grid { grid-template-columns: 1fr; }
+            .proj-grid { grid-template-columns: 1fr 1fr; }
         }
-        @media (max-width: 640px) {
-            header { padding: 10px 14px; }
-            .logo { height: 32px; }
-            .user-info { display: none; }
-            .workspace { padding: 12px; gap: 12px; }
-            .chat-area { margin: 0 12px 12px; }
-            .site-footer { margin: 0 12px 76px; }
-            .mobile-bar {
-                display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;
-                background: #fff; border-top: 1px solid var(--border); padding: 8px;
-                gap: 8px; box-shadow: 0 -4px 16px rgba(16,42,67,.08);
-            }
-            .mobile-bar button { flex: 1; padding: 12px 4px; font-size: 12px; }
-            /* Forge is already in the mobile bar + Quick Actions — drop the redundant
-               chat-header button on small screens to keep the header tidy. */
-            #forgeBtn { display: none; }
-        }
-        @media (prefers-reduced-motion: reduce) { *{ animation: none !important; transition: none !important; } }
+        @media (max-width: 420px) { .proj-grid { grid-template-columns: 1fr; } }
+        @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
     </style>
 </head>
 <body>
-    <a class="skip-link" href="#main">Skip to content</a>
+    <a class="skip-link" href="#waiting">Skip to what's waiting on you</a>
 
+    <!-- HEADER (dark) — J8NIX gold wordmark; 3Shamrocks on a white badge -->
     <header>
         <div class="brand">
-            <img src="J8NIX_notag.png" alt="J8NIX™" class="logo" onerror="this.onerror=null;this.src='J8NIX_LOGO.png'">
+            <img src="J8NIX_notag.png" alt="J8NIX" class="logo" onerror="this.onerror=null;this.src='J8NIX_LOGO.png'">
             <span class="tm" aria-hidden="true">™</span>
-            <img src="J8NIX_tagline.png" alt="Smart Operations OS, Only Smarter" class="tagline-img"
-                 onerror="this.style.display='none';document.getElementById('taglineFallback').style.display='block'">
-            <span id="taglineFallback" class="tagline-text" style="display:none">Smart Operations OS, Only Smarter</span>
+            <span class="brand-sub">Command Center</span>
+            <span class="brand-divider" aria-hidden="true"></span>
+            <span class="user-chip">
+                <span class="logo-badge"><img src="3shamrocks_black.png" alt="3Shamrocks Studio" height="20" onerror="this.parentNode.style.display='none'"></span>
+                <span class="user-meta">
+                    <span class="nm" id="userName">Dave Markovich</span>
+                    <span class="sub" id="userOrg">3Shamrocks Studio</span>
+                </span>
+            </span>
         </div>
         <div class="header-right">
-            <span id="driveBadge" class="badge" hidden><span class="dot"></span><span id="driveLabel">Stationary</span></span>
-            <span id="clockBadge" class="badge"><span class="dot"></span><span id="clockLabel">—</span></span>
-            <span class="user-info" id="userInfo">Dave Markovich • 3Shamrocks Studio</span>
-            <button class="primary" id="settingsBtn" aria-haspopup="dialog">⚙ Settings</button>
+            <span class="badge"><span class="dot"></span><span id="clockLabel">—</span></span>
+            <button class="hdr-btn" id="briefBtn" title="Hear what's waiting on you">🔊 Brief</button>
+            <button class="hdr-btn gold" id="forgeBtn" title="Prompt Forge — engineer a tight AI prompt">🔥 Prompt Forge</button>
+            <button class="hdr-btn" id="helpBtn" aria-haspopup="dialog">❔ Help</button>
+            <button class="hdr-btn" id="settingsBtn" aria-haspopup="dialog">⚙ Settings</button>
         </div>
     </header>
 
-    <main id="main" class="workspace">
-        <!-- LEFT: Calendar -->
-        <section class="panel" aria-label="Calendar">
-            <div class="panel-header">Calendar</div>
-            <div class="cal-head">
-                <button class="icon-btn" id="calPrev" aria-label="Previous month">‹</button>
-                <span class="cal-title" id="calTitle">—</span>
-                <button class="icon-btn" id="calNext" aria-label="Next month">›</button>
+    <main class="workspace">
+        <!-- LEFT RAIL: Waiting on You (priority) -->
+        <section class="panel area-waiting" id="waiting" aria-label="Waiting on you">
+            <div class="panel-header">
+                <span class="ph-title">⏳ Waiting on You <span class="count-chip" id="waitCount">0</span></span>
+                <button class="icon-btn" id="addWaitBtn" title="Add a waiting item" aria-label="Add a waiting item">＋</button>
             </div>
-            <div class="cal-grid" id="calGrid" role="grid"></div>
+            <div class="panel-scroll"><div class="wait-list" id="waitList"></div></div>
         </section>
 
-        <!-- CENTER: Tasks + Projects -->
-        <div class="col">
-            <section class="panel" aria-label="Today's tasks">
-                <div class="panel-header">
-                    <span>Today's Tasks</span>
-                    <button class="ghost" id="addTaskBtn">+ New Task</button>
-                </div>
-                <div class="table-wrap">
-                    <table id="tasksTable">
-                        <thead><tr>
-                            <th>#</th><th>Project name</th><th>Created</th><th>Deadline</th><th>Who's on it?</th><th>Status</th><th>More</th><th></th>
-                        </tr></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </section>
+        <!-- TOP-RIGHT: Projects grid -->
+        <section class="panel area-projects" aria-label="Projects">
+            <div class="panel-header">
+                <span class="ph-title">🗂 Projects</span>
+                <span class="pulse" id="pulse" role="tablist" aria-label="Filter projects by status"></span>
+            </div>
+            <div class="panel-scroll"><div class="proj-grid" id="projGrid"></div></div>
+        </section>
 
-            <section class="panel" aria-label="Projects">
-                <div class="panel-header">
-                    <span>Projects</span>
-                    <span class="header-actions">
-                        <span class="proj-tabs" role="tablist" aria-label="Project filter">
-                            <button class="tab-btn on" id="tabActive" role="tab" aria-selected="true">Active</button>
-                            <button class="tab-btn" id="tabDone" role="tab" aria-selected="false">Done</button>
-                        </span>
-                        <button class="ghost" id="addProjectBtn">+ New Project</button>
-                    </span>
-                </div>
-                <div class="table-wrap">
-                    <table id="projectsTable">
-                        <thead><tr>
-                            <th>#</th><th>Client name</th><th>Project name</th><th>Deadline</th><th>Who's on it?</th><th>Status</th><th></th>
-                        </tr></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
-
-        <!-- RIGHT: Progress + Live status + Quick actions -->
-        <div class="col">
-            <section class="panel" aria-label="Daily progress">
-                <div class="panel-header">Daily Progress</div>
-                <div class="progress-wrap">
-                    <svg class="progress-circle" viewBox="0 0 120 120" role="img" aria-label="Daily progress ring">
-                        <circle cx="60" cy="60" r="52" fill="none" stroke="#e6e9ef" stroke-width="11"></circle>
-                        <circle id="progressArc" cx="60" cy="60" r="52" fill="none" stroke="#4faf70"
-                                stroke-width="11" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"></circle>
-                    </svg>
-                    <div class="progress-center">
-                        <div class="big" id="progressFraction">4/9</div>
-                        <div class="sub" id="progressSub">Tasks left</div>
+        <!-- BOTTOM-RIGHT: Message Claude composer (honest copy-to-paste) -->
+        <section class="panel area-claude" aria-label="Message Claude">
+            <div class="panel-header">
+                <span class="ph-title">💬 Message Claude</span>
+                <span class="claude-note">📋 copy &amp; send · <b>live bridge: future phase</b></span>
+            </div>
+            <div class="claude-body">
+                <div class="claude-row">
+                    <textarea id="claudeInput" placeholder="Type a command for Claude — e.g. &quot;Add a Firebase setup checklist to the TH MVP project and draft the env config.&quot;" aria-label="Command for Claude"></textarea>
+                    <div class="claude-side">
+                        <select id="claudeCtx" aria-label="Attach project context"><option value="">No project context</option></select>
+                        <div class="claude-btns">
+                            <button class="primary" id="claudeCopy">📋 Copy</button>
+                            <button class="ghost" id="claudeClear">Clear</button>
+                        </div>
                     </div>
                 </div>
-            </section>
-
-            <section class="panel" aria-label="Live status">
-                <div class="panel-header">Live Status</div>
-                <div class="stat-grid">
-                    <div><div class="n" id="statClients">0</div><div class="l">Clients</div></div>
-                    <div><div class="n" id="statProjects">0</div><div class="l">Projects</div></div>
-                    <div><div class="n" id="statTasks">0</div><div class="l">Tasks</div></div>
-                </div>
-                <div class="live-line"><span class="badge"><span class="dot"></span>Systems nominal</span><span id="speedLine"></span></div>
-            </section>
-
-            <section class="panel" aria-label="Quick actions" style="flex:1">
-                <div class="panel-header">Quick Actions</div>
-                <div class="qa-list">
-                    <button class="primary" data-qa="forge">🔥 Prompt Forge</button>
-                    <button class="primary" data-qa="newProject">＋ New project</button>
-                    <button class="primary" data-qa="newTask">✓ New task</button>
-                    <button class="primary" data-qa="reminder">⏰ New reminder</button>
-                    <button class="primary" data-qa="audit">📋 Audit projects</button>
-                    <button class="primary" data-qa="memo">🎤 Record voice memo</button>
-                </div>
-            </section>
-        </div>
+            </div>
+        </section>
     </main>
 
-    <!-- BOTTOM: Chat -->
-    <section class="panel chat-area" aria-label="J8NIX assistant chat">
-        <div class="panel-header">
-            <span>J8NIX™ Chat • Smart Assistant <span id="voiceState" style="font-weight:600;text-transform:none;color:var(--secondary)"></span></span>
-            <span style="display:flex;gap:8px;align-items:center">
-                <button class="ghost" id="forgeBtn" title="Open Prompt Forge — build a token-efficient prompt">🔥 Prompt Forge</button>
-                <button class="ghost" id="wakeBtn" aria-pressed="false" title="Toggle wake-word listening">🛜 Wake word: off</button>
-            </span>
-        </div>
-        <div id="chatFeed" class="chat-feed" aria-live="polite" aria-label="Conversation"></div>
-        <div class="chat-input-row">
-            <input id="chatInput" type="text" autocomplete="off" placeholder="Type a message or say “Hey J8NIX…”  (drag files here to attach)" aria-label="Message J8NIX">
-            <button class="primary" id="sendBtn">Send</button>
-            <button class="primary" id="recBtn" title="Record voice memo">🎤 Record</button>
-            <button class="primary" id="speakBtn" title="Speak last reply">🔊 Speak</button>
-        </div>
-    </section>
-
-    <!-- Persistent copyright / branding credit -->
-    <footer class="site-footer">
-        <span class="logo-badge"><img src="3shamrocks_black.png" alt="3Shamrocks Studio" onerror="this.parentNode.style.display='none'"></span>
-        <span class="copy">© 2026 3Shamrocks Studio. All rights reserved. &nbsp;·&nbsp; <strong>J8NIX<span class="tm">™</span></strong> is a product of 3Shamrocks Studio.</span>
-    </footer>
-
-    <!-- Mobile action bar -->
-    <nav class="mobile-bar" aria-label="Quick actions">
-        <button class="primary" data-qa="forge">🔥 Forge</button>
-        <button class="primary" data-qa="newTask">✓ Task</button>
-        <button class="primary" data-qa="memo">🎤 Memo</button>
-        <button class="ghost" id="settingsBtnMobile">⚙</button>
-    </nav>
-
-    <!-- Settings / Onboarding modal -->
+    <!-- Modal -->
     <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="modal">
-            <div class="modal-head">
-                <h2 id="modalTitle">Settings</h2>
-                <button class="icon-btn" id="modalClose" aria-label="Close" style="font-size:20px">✕</button>
-            </div>
+            <div class="modal-head"><h2 id="modalTitle">Settings</h2><button class="icon-btn" id="modalClose" aria-label="Close" style="font-size:20px">✕</button></div>
             <div class="modal-body" id="modalBody"></div>
             <div class="modal-foot" id="modalFoot"></div>
         </div>
@@ -515,886 +342,429 @@
     <script>
     "use strict";
     (function () {
-        /* ---------- Safety: unregister any stray service workers & purge foreign caches ----------
-           Lesson from SHOMER: GitHub Pages org projects share one origin; a stale SW on another
-           project's scope can hijack pages. J8NIX ships no SW, so we proactively clear them. */
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function (regs) {
-                regs.forEach(function (r) { r.unregister(); });
-            }).catch(function(){});
-        }
-        if (window.caches && caches.keys) {
-            caches.keys().then(function (keys) {
-                keys.forEach(function (k) { if (!/^j8nix-own/.test(k)) caches.delete(k); });
-            }).catch(function(){});
-        }
+        /* ---------- shared-origin hygiene: clear stray SWs / foreign caches ---------- */
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.getRegistrations().then(function (r) { r.forEach(function (x) { x.unregister(); }); }).catch(function(){}); }
+        if (window.caches && caches.keys) { caches.keys().then(function (k) { k.forEach(function (n) { if (!/^j8nix-own/.test(n)) caches.delete(n); }); }).catch(function(){}); }
 
-        /* ---------- Utilities ---------- */
-        var $ = function (sel, root) { return (root || document).querySelector(sel); };
-        var STORE_KEY = 'j8nix_state_v1';
-        /* Calm, psychologically-meaningful status palette. Active (blue / momentum) is now
-           clearly distinct from Done (green / completion). edge = saturated accent for row stripes. */
-        var STATUS_CYCLE = {
-            task: [
-                { label: 'New',         bg: '#e7edf3', fg: '#44546a', edge: '#94a6bd' }, // neutral slate — to-do
-                { label: 'In Progress', bg: '#d4e4f7', fg: '#1b3e66', edge: '#3b82c4' }, // blue — focus/momentum
-                { label: 'Blocked',     bg: '#f8ddc6', fg: '#7a4310', edge: '#e08a3c' }, // orange — stuck
-                { label: 'Done',        bg: '#cfe9d6', fg: '#1c5132', edge: '#4faf70' }  // calm green — completion
-            ],
-            project: [
-                { label: 'Active',   bg: '#d4e4f7', fg: '#1b3e66', edge: '#3b82c4' }, // blue — ongoing
-                { label: 'On Hold',  bg: '#f6e6c0', fg: '#6b4e16', edge: '#d6a93f' }, // amber — paused
-                { label: 'At Risk',  bg: '#f6d2d0', fg: '#7a1d19', edge: '#d9534f' }, // red — urgent
-                { label: 'Done',     bg: '#cfe9d6', fg: '#1c5132', edge: '#4faf70' }  // green — completed (auto-moves)
-            ]
+        var VERSION = '2.0.0';
+        var STORE_KEY = 'j8nix_cc_v2';
+        var BASE = 'https://3shamrocksstudio.github.io/';
+        var $ = function (s, r) { return (r || document).querySelector(s); };
+
+        /* ---------- Status model ---------- */
+        var STATUS = {
+            live: { label: 'Live',        cls: 'live', dot: '🟢' },
+            prog: { label: 'In Progress', cls: 'prog', dot: '🔵' },
+            wait: { label: 'Waiting',     cls: 'wait', dot: '🟡' },
+            back: { label: 'Backlog',     cls: 'back', dot: '⚪' }
         };
-        function statusEdge(kind, label) {
-            var c = STATUS_CYCLE[kind].find(function (s) { return s.label === label; });
-            return c ? c.edge : 'transparent';
-        }
+        var STATUS_ORDER = ['live', 'prog', 'wait', 'back'];
 
-        function todayISO() { return new Date().toISOString().slice(0, 10); }
-
+        /* ---------- Real 3Shamrocks Studio data (seed; editable + persisted) ----------
+           Every `url` here was verified to return HTTP 200. Items without a public URL
+           omit the link rather than fabricate one. */
         function defaultState() {
             return {
-                settings: {
-                    userName: 'Dave Markovich',
-                    org: '3Shamrocks Studio',
-                    voiceEnabled: true,
-                    voiceName: '',          // chosen TTS voice (empty = auto-pick warm female)
-                    notifications: false,
-                    driveMode: true,
-                    onboarded: false,
-                    aiProvider: 'anthropic', // optional live-dispatch provider (anthropic | openai)
-                    apiModel: '',            // optional model override
-                    apiKey: '',              // BYO key, stored locally only — see in-app warning + README
-                    ttsKey: '',              // optional ElevenLabs key for a premium neural voice (local only)
-                    ttsVoiceId: ''           // optional ElevenLabs voice id (defaults to a warm female)
-                },
-                tasks: [
-                    { id: 1, project: 'J8NIX UI polish',        created: '2026-06-10', deadline: 'Today',    who: 'Dave',  status: 'In Progress', more: 'Final pass' },
-                    { id: 2, project: 'SHOMER deploy QA',        created: '2026-06-11', deadline: 'Today',    who: 'Dave',  status: 'Done',        more: 'Live' },
-                    { id: 3, project: 'Pitch deck export',       created: '2026-06-12', deadline: 'Today',    who: 'Dave',  status: 'Done',        more: 'PDF' },
-                    { id: 4, project: 'Brand kit handoff',       created: '2026-06-12', deadline: 'Today',    who: 'Mara',  status: 'Done',        more: '' },
-                    { id: 5, project: 'Client invoice batch',    created: '2026-06-13', deadline: 'Today',    who: 'Dave',  status: 'Done',        more: '' },
-                    { id: 6, project: 'Website hero animation',  created: '2026-06-13', deadline: 'Tomorrow', who: 'Lee',   status: 'Done',        more: '' },
-                    { id: 7, project: 'J8NIX repo + Pages',      created: '2026-06-14', deadline: 'Today',    who: 'Dave',  status: 'In Progress', more: 'Shipping' },
-                    { id: 8, project: 'Voice assistant tuning',  created: '2026-06-14', deadline: 'Fri',      who: 'Dave',  status: 'New',         more: '' },
-                    { id: 9, project: 'Quarterly ops review',    created: '2026-06-15', deadline: 'Mon',      who: 'Team',  status: 'New',         more: '' }
-                ],
+                settings: { userName: 'Dave Markovich', org: '3Shamrocks Studio', voiceEnabled: true, voiceName: '', aiProvider: 'anthropic', apiModel: '', apiKey: '', ttsKey: '', ttsVoiceId: '' },
                 projects: [
-                    { id: 1, client: 'Internal',     project: 'Trashure-Hunters MVP', deadline: 'Q3 2026', who: 'Dave', status: 'Active' },
-                    { id: 2, client: 'Internal',     project: 'SHOMER / Shomergency', deadline: 'Q3 2026', who: 'Dave', status: 'Active' },
-                    { id: 3, client: '3Shamrocks',   project: 'Studio website redesign', deadline: 'Q3 2026', who: 'Lee', status: 'Active' },
-                    { id: 4, client: 'Acme Co.',     project: 'Brand identity system', deadline: 'Aug 2026', who: 'Mara', status: 'On Hold' },
-                    { id: 5, client: 'Northstar',    project: 'Campaign microsite',    deadline: 'Sep 2026', who: 'Team', status: 'At Risk' }
+                    { key: 'th-mvp',   name: 'Trashure-Hunters · MVP', cat: 'App build', status: 'wait', url: BASE + 'th-website/',
+                      ship: [ { t: 'Regenerate Anthropic API key', done: false }, { t: 'Add Firebase credentials', done: false }, { t: 'Re-test end to end', done: false } ] },
+                    { key: 'ig-network', name: 'IG Network', cat: 'Media · social', status: 'wait', url: BASE + 'media-network-hub/kit.html',
+                      ship: [ { t: 'Finalize the 4 account names (paused here)', done: false }, { t: 'Create the 4 Instagram accounts', done: false } ] },
+                    { key: 'th-movie', name: 'Trashure-Hunters · Movie', cat: 'Media · script', status: 'wait', url: '',
+                      ship: [ { t: 'Decide script length — ~55 min vs ~90 min', done: false } ] },
+                    { key: 'cosmix',   name: 'Cosmix', cat: 'Brand · creative', status: 'wait', url: '',
+                      ship: [ { t: 'Pick creative direction — option A or option C', done: false } ] },
+                    { key: 'shomer-forest', name: 'SHOMER · Forest', cat: 'Live experience', status: 'live', url: BASE + 'shomer-forest/',
+                      ship: [ { t: 'Review the live build end to end', done: false }, { t: 'Check controls + audio on mobile', done: false } ] },
+                    { key: 'shomer-beach',  name: 'SHOMER · Beach', cat: 'Live experience', status: 'live', url: BASE + 'shomer-beach/',
+                      ship: [ { t: 'Test the live build', done: false } ] },
+                    { key: 'milo-app',  name: 'Milo', cat: 'App', status: 'live', url: BASE + 'milo-app/',
+                      ship: [ { t: 'Test live flow', done: false }, { t: 'Review copy', done: false } ] },
+                    { key: 'chore-wars', name: 'Chore Wars', cat: 'App', status: 'live', url: BASE + 'chore-wars/',
+                      ship: [ { t: 'Test the live flow', done: false } ] },
+                    { key: 'senior-helper', name: 'Senior Helper', cat: 'App', status: 'live', url: BASE + 'senior-helper/',
+                      ship: [ { t: 'Test live', done: false }, { t: 'Accessibility pass', done: false } ] },
+                    { key: 'th-website', name: 'Trashure-Hunters · Site', cat: 'Website', status: 'live', url: BASE + 'th-website/',
+                      ship: [ { t: 'Review the live site', done: false } ] },
+                    { key: '3s-design-system', name: '3S Design System', cat: 'System', status: 'live', url: BASE + '3s-design-system/',
+                      ship: [ { t: 'Review tokens + components', done: false } ] },
+                    { key: 'media-network-hub', name: 'Media Network Hub', cat: 'Media · hub', status: 'live', url: BASE + 'media-network-hub/', kit: BASE + 'media-network-hub/kit.html',
+                      ship: [ { t: 'Review the hub', done: false }, { t: 'Open the brand kit', done: false } ] },
+                    { key: 'gumroad', name: 'Gumroad Product', cat: 'Product · store', status: 'live', url: 'https://markodave.gumroad.com/l/ruaqk',
+                      ship: [ { t: 'Review the live listing', done: false } ] }
                 ],
-                chat: []
+                /* Waiting-on-You panel — ordered by priority. `pk` links to a project card.
+                   `link` is the exact thing to open (only set when a real URL exists). */
+                waiting: [
+                    { id: 'w1', pk: 'ig-network', proj: 'IG Network', pri: 'high', note: 'Paused on final account names',
+                      doing: ['Finalize the 4 account names', 'Create the 4 Instagram accounts'], link: { label: 'Open brand kit', url: BASE + 'media-network-hub/kit.html' } },
+                    { id: 'w2', pk: 'th-mvp', proj: 'Trashure-Hunters · MVP', pri: 'high', note: '',
+                      doing: ['Regenerate Anthropic API key', 'Add Firebase credentials', 'Re-test end to end'], link: { label: 'Open live site', url: BASE + 'th-website/' } },
+                    { id: 'w3', pk: 'th-movie', proj: 'Trashure-Hunters · Movie', pri: 'med', note: '',
+                      doing: ['Decide script length — ~55 min vs ~90 min'], link: null },
+                    { id: 'w4', pk: 'cosmix', proj: 'Cosmix', pri: 'med', note: '',
+                      doing: ['Pick creative direction — option A or option C'], link: null },
+                    { id: 'w5', pk: '', proj: 'Live products', pri: 'low', note: 'When you have a window',
+                      doing: ['Review & test each deployed product (green cards →)'], link: null }
+                ]
             };
         }
 
         var state;
         try {
             state = JSON.parse(localStorage.getItem(STORE_KEY)) || defaultState();
-            if (!state.tasks || !state.settings) state = defaultState();
+            if (!state.projects || !state.settings || !state.waiting) state = defaultState();
+            var ds = defaultState().settings;
+            for (var k in ds) { if (!(k in state.settings)) state.settings[k] = ds[k]; }
         } catch (e) { state = defaultState(); }
 
         var saveTimer;
-        function save() {
-            clearTimeout(saveTimer);
-            saveTimer = setTimeout(function () {
-                try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
-                catch (e) { toast('Could not save (storage full or blocked).', 'urgent'); }
-            }, 120);
-        }
+        function save() { clearTimeout(saveTimer); saveTimer = setTimeout(function () { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { toast('Could not save (storage blocked).', 'urgent'); } }, 120); }
 
-        /* ---------- Toasts / notifications ---------- */
+        /* ---------- Toasts ---------- */
         function toast(msg, kind) {
-            var t = document.createElement('div');
-            t.className = 'toast' + (kind ? ' ' + kind : '');
-            t.textContent = msg; // textContent => no injection
+            var t = document.createElement('div'); t.className = 'toast' + (kind ? ' ' + kind : ''); t.textContent = msg;
             $('#toastStack').appendChild(t);
             setTimeout(function () { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; }, 3200);
             setTimeout(function () { t.remove(); }, 3600);
-            if (state.settings.notifications && 'Notification' in window && Notification.permission === 'granted') {
-                try { new Notification('J8NIX', { body: msg, icon: 'J8NIX_LOGO.png' }); } catch (e) {}
-            }
         }
 
-        /* ---------- Status pill ---------- */
-        function makePill(kind, value, onChange) {
-            var cycle = STATUS_CYCLE[kind];
-            var idx = Math.max(0, cycle.findIndex(function (s) { return s.label === value; }));
-            var btn = document.createElement('button');
-            btn.className = 'status-pill';
-            btn.type = 'button';
-            function paint() {
-                var s = cycle[idx];
-                btn.textContent = s.label;
-                btn.style.background = s.bg;
-                btn.style.color = s.fg;
-                btn.setAttribute('aria-label', 'Status: ' + s.label + '. Click to change.');
+        /* ---------- Small DOM helpers ---------- */
+        function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+        function btn(label, cls, onClick) { var b = el('button', cls, label); b.addEventListener('click', onClick); return b; }
+        function projByKey(key) { return state.projects.find(function (p) { return p.key === key; }); }
+
+        /* ---------- Projects grid ---------- */
+        var filter = 'all';
+        function statusCounts() { var c = { live: 0, prog: 0, wait: 0, back: 0 }; state.projects.forEach(function (p) { c[p.status] = (c[p.status] || 0) + 1; }); return c; }
+        function renderPulse() {
+            var c = statusCounts(), wrap = $('#pulse'); wrap.textContent = '';
+            function chip(key, label, dotColor, count) {
+                var b = el('button', 'pulse-chip' + (filter === key ? ' on' : '')); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', filter === key);
+                if (dotColor) { var d = el('span', 'pc-dot'); d.style.background = dotColor; b.appendChild(d); }
+                b.appendChild(document.createTextNode(label + ' ' + count));
+                b.addEventListener('click', function () { filter = key; renderPulse(); renderProjects(); });
+                wrap.appendChild(b);
             }
-            paint();
-            btn.addEventListener('click', function () {
-                idx = (idx + 1) % cycle.length;
-                paint();
-                onChange(cycle[idx].label);
+            chip('all', 'All', '', state.projects.length);
+            chip('live', 'Live', 'var(--st-live)', c.live);
+            chip('prog', 'In progress', 'var(--st-prog)', c.prog);
+            chip('wait', 'Waiting', 'var(--st-wait)', c.wait);
+            chip('back', 'Backlog', 'var(--st-back)', c.back);
+        }
+        function makeStatusPill(p) {
+            var s = STATUS[p.status]; var b = el('button', 'status-pill sp-' + s.cls, s.label); b.type = 'button';
+            b.setAttribute('aria-label', 'Status: ' + s.label + '. Click to change.');
+            b.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var i = STATUS_ORDER.indexOf(p.status); p.status = STATUS_ORDER[(i + 1) % STATUS_ORDER.length];
+                save(); renderProjects(); renderPulse(); syncWaitingWithStatus(p);
+                toast(p.name + ' → ' + STATUS[p.status].label);
             });
-            return btn;
+            return b;
         }
-
-        /* ---------- Editable cell ---------- */
-        function editableCell(value, onCommit) {
-            var td = document.createElement('td');
-            td.contentEditable = 'true';
-            td.spellcheck = false;
-            td.textContent = value == null ? '' : String(value);
-            function commit() { onCommit(td.textContent.trim()); }
-            td.addEventListener('blur', commit);
-            td.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') { e.preventDefault(); td.blur(); }
-                if (e.key === 'Escape') { td.textContent = value == null ? '' : String(value); td.blur(); }
-            });
-            return td;
-        }
-
-        function delButton(onDel) {
-            var td = document.createElement('td');
-            td.className = 'row-actions';
-            var b = document.createElement('button');
-            b.className = 'icon-btn';
-            b.title = 'Delete row';
-            b.setAttribute('aria-label', 'Delete row');
-            b.textContent = '🗑';
-            b.addEventListener('click', onDel);
-            td.appendChild(b);
-            return td;
-        }
-
-        /* ---------- Friendly empty-state row ---------- */
-        function emptyRow(cols, emoji, msg, ctaLabel, ctaFn) {
-            var tr = document.createElement('tr'); tr.className = 'empty-row';
-            var td = document.createElement('td'); td.colSpan = cols;
-            var wrap = document.createElement('div'); wrap.className = 'empty-state';
-            var em = document.createElement('div'); em.className = 'em-emoji'; em.textContent = emoji; em.setAttribute('aria-hidden', 'true');
-            var m = document.createElement('div'); m.className = 'em-msg'; m.textContent = msg;
-            wrap.appendChild(em); wrap.appendChild(m);
-            if (ctaLabel) {
-                var b = document.createElement('button'); b.className = 'primary'; b.textContent = ctaLabel;
-                b.addEventListener('click', ctaFn); wrap.appendChild(b);
-            }
-            td.appendChild(wrap); tr.appendChild(td); return tr;
-        }
-
-        /* ---------- Render tasks ---------- */
-        function renderTasks() {
-            var tb = $('#tasksTable tbody');
-            tb.textContent = '';
-            if (!state.tasks.length) {
-                tb.appendChild(emptyRow(8, '🗒️', 'No tasks today — you’re all clear.', '+ Add your first task', addTask));
-                return;
-            }
-            state.tasks.forEach(function (t, i) {
-                var tr = document.createElement('tr');
-                var num = document.createElement('td'); num.textContent = String(i + 1);
-                num.style.boxShadow = 'inset 4px 0 0 ' + statusEdge('task', t.status);
-                tr.appendChild(num);
-                tr.appendChild(editableCell(t.project,  function (v) { t.project = v; save(); }));
-                tr.appendChild(editableCell(t.created,  function (v) { t.created = v; save(); }));
-                tr.appendChild(editableCell(t.deadline, function (v) { t.deadline = v; save(); }));
-                tr.appendChild(editableCell(t.who,      function (v) { t.who = v; save(); }));
-                var statusTd = document.createElement('td');
-                statusTd.appendChild(makePill('task', t.status, function (label) {
-                    t.status = label; num.style.boxShadow = 'inset 4px 0 0 ' + statusEdge('task', label);
-                    save(); updateProgress(); updateStats();
-                }));
-                tr.appendChild(statusTd);
-                tr.appendChild(editableCell(t.more, function (v) { t.more = v; save(); }));
-                tr.appendChild(delButton(function () {
-                    state.tasks.splice(i, 1); save(); renderTasks(); updateProgress(); updateStats(); renderCalendar();
-                    toast('Task deleted.');
-                }));
-                tb.appendChild(tr);
-            });
-        }
-
-        /* ---------- Render projects (Active / Done tabs) ----------
-           A project with status "Done" auto-moves to the Done tab; it can be restored. */
-        var projectTab = 'active';
-        function setProjectTab(tab) {
-            projectTab = tab;
-            var a = $('#tabActive'), d = $('#tabDone');
-            if (a) { a.classList.toggle('on', tab === 'active'); a.setAttribute('aria-selected', tab === 'active'); }
-            if (d) { d.classList.toggle('on', tab === 'done'); d.setAttribute('aria-selected', tab === 'done'); }
-            renderProjects();
+        function nextActionText(p) {
+            var open = p.ship.filter(function (x) { return !x.done; });
+            if (!open.length) return p.status === 'live' ? 'Deployed — all checks done.' : 'No open actions.';
+            return open[0].t + (open.length > 1 ? ' · +' + (open.length - 1) + ' more' : '');
         }
         function renderProjects() {
-            var tb = $('#projectsTable tbody');
-            tb.textContent = '';
-            var doneList = state.projects.filter(function (p) { return p.status === 'Done'; });
-            var activeList = state.projects.filter(function (p) { return p.status !== 'Done'; });
-            var a = $('#tabActive'), d = $('#tabDone');
-            if (a) a.textContent = 'Active (' + activeList.length + ')';
-            if (d) d.textContent = 'Done (' + doneList.length + ')';
-            var list = projectTab === 'done' ? doneList : activeList;
+            var grid = $('#projGrid'); grid.textContent = '';
+            var list = state.projects.filter(function (p) { return filter === 'all' || p.status === filter; });
             if (!list.length) {
-                tb.appendChild(projectTab === 'done'
-                    ? emptyRow(7, '✅', 'No completed projects yet. Mark a project “Done” to file it here.')
-                    : emptyRow(7, '📁', 'No active projects yet.', '+ Add your first project', addProject));
-                return;
+                var es = el('div', 'empty-state'); es.appendChild(el('div', 'em-emoji', '🗂'));
+                es.appendChild(el('div', null, 'No projects in this view.')); grid.appendChild(es); return;
             }
-            list.forEach(function (p, idx) {
-                var tr = document.createElement('tr');
-                var num = document.createElement('td'); num.textContent = String(idx + 1);
-                num.style.boxShadow = 'inset 4px 0 0 ' + statusEdge('project', p.status);
-                tr.appendChild(num);
-                tr.appendChild(editableCell(p.client,   function (v) { p.client = v; save(); }));
-                tr.appendChild(editableCell(p.project,  function (v) { p.project = v; save(); }));
-                tr.appendChild(editableCell(p.deadline, function (v) { p.deadline = v; save(); }));
-                tr.appendChild(editableCell(p.who,      function (v) { p.who = v; save(); }));
-                var statusTd = document.createElement('td');
-                statusTd.appendChild(makePill('project', p.status, function (label) {
-                    p.status = label; num.style.boxShadow = 'inset 4px 0 0 ' + statusEdge('project', label);
-                    save(); updateStats();
-                    // Auto-move between tabs when crossing the Done boundary.
-                    var crossed = (label === 'Done') !== (projectTab === 'done');
-                    if (crossed) {
-                        renderProjects();
-                        if (label === 'Done') toast('Project completed — moved to Done.', 'success');
-                    }
-                }));
-                tr.appendChild(statusTd);
-                var actions = document.createElement('td'); actions.className = 'row-actions';
-                if (p.status === 'Done') {
-                    var restore = document.createElement('button');
-                    restore.className = 'icon-btn'; restore.title = 'Restore to Active';
-                    restore.setAttribute('aria-label', 'Restore project to Active'); restore.textContent = '↩︎';
-                    restore.addEventListener('click', function () {
-                        p.status = 'Active'; save(); updateStats(); renderProjects();
-                        toast('Project restored to Active.', 'success');
-                    });
-                    actions.appendChild(restore);
-                }
-                var del = document.createElement('button');
-                del.className = 'icon-btn'; del.title = 'Delete project'; del.setAttribute('aria-label', 'Delete project'); del.textContent = '🗑';
-                del.addEventListener('click', function () {
-                    state.projects.splice(state.projects.indexOf(p), 1); save(); renderProjects(); updateStats();
-                    toast('Project deleted.');
-                });
-                actions.appendChild(del);
-                tr.appendChild(actions);
-                tb.appendChild(tr);
-            });
-        }
+            list.forEach(function (p) {
+                var s = STATUS[p.status];
+                var card = el('div', 'proj-card s-' + s.cls);
+                var head = el('div', 'pc-head');
+                var nameWrap = el('div'); nameWrap.appendChild(el('div', 'pc-name', p.name)); nameWrap.appendChild(el('div', 'pc-cat', p.cat));
+                head.appendChild(nameWrap); head.appendChild(makeStatusPill(p)); card.appendChild(head);
 
-        function nextId(arr) { return arr.reduce(function (m, x) { return Math.max(m, x.id || 0); }, 0) + 1; }
+                var next = el('div', 'pc-next');
+                if (p.status === 'wait') { next.appendChild(el('b', null, 'Needs you: ')); next.appendChild(document.createTextNode(nextActionText(p))); }
+                else next.textContent = nextActionText(p);
+                card.appendChild(next);
 
-        function addTask() {
-            state.tasks.push({ id: nextId(state.tasks), project: 'New task', created: todayISO(), deadline: 'Today', who: state.settings.userName.split(' ')[0] || 'Me', status: 'New', more: '' });
-            save(); renderTasks(); updateProgress(); updateStats();
-            var rows = $('#tasksTable tbody').children;
-            if (rows.length) rows[rows.length - 1].children[1].focus();
-        }
-        function addProject() {
-            state.projects.push({ id: nextId(state.projects), client: 'New client', project: 'New project', deadline: 'TBD', who: 'Team', status: 'Active' });
-            save(); updateStats();
-            if (projectTab !== 'active') setProjectTab('active'); else renderProjects();
-            var rows = $('#projectsTable tbody').children;
-            if (rows.length) rows[rows.length - 1].children[1].focus();
-        }
-
-        /* ---------- Progress ring (remaining/total) ---------- */
-        var ARC = 2 * Math.PI * 52; // ~326.7
-        function updateProgress() {
-            var total = state.tasks.length;
-            var done = state.tasks.filter(function (t) { return t.status === 'Done'; }).length;
-            var left = total - done;
-            var sub = $('#progressSub');
-            if (!total) {
-                $('#progressFraction').textContent = '—';
-                if (sub) sub.textContent = 'No tasks yet';
-            } else {
-                $('#progressFraction').textContent = left + '/' + total;
-                if (sub) sub.textContent = left === 0 ? 'All done 🎉' : 'Tasks left';
-            }
-            var frac = total ? done / total : 0;
-            $('#progressArc').style.strokeDashoffset = String(ARC * (1 - frac));
-            var svg = $('#progressArc').ownerSVGElement;
-            if (svg) svg.setAttribute('aria-label', total
-                ? ('Daily progress: ' + done + ' of ' + total + ' tasks complete, ' + left + ' remaining.')
-                : 'Daily progress: no tasks yet.');
-        }
-
-        function updateStats() {
-            var clients = {};
-            state.projects.forEach(function (p) { if (p.client) clients[p.client.toLowerCase()] = 1; });
-            $('#statClients').textContent = String(Object.keys(clients).length);
-            $('#statProjects').textContent = String(state.projects.length);
-            $('#statTasks').textContent = String(state.tasks.length);
-        }
-
-        /* ---------- Calendar ---------- */
-        var calRef = new Date();
-        function renderCalendar() {
-            var y = calRef.getFullYear(), m = calRef.getMonth();
-            var first = new Date(y, m, 1);
-            var startDow = first.getDay();
-            var days = new Date(y, m + 1, 0).getDate();
-            var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-            $('#calTitle').textContent = months[m] + ' ' + y;
-            var grid = $('#calGrid'); grid.textContent = '';
-            ['S','M','T','W','T','F','S'].forEach(function (d) {
-                var c = document.createElement('div'); c.className = 'dow'; c.textContent = d; grid.appendChild(c);
-            });
-            var now = new Date();
-            for (var i = 0; i < startDow; i++) { var e = document.createElement('div'); e.className = 'cal-cell empty'; e.setAttribute('aria-hidden', 'true'); grid.appendChild(e); }
-            // build each day cell; mark days with a matching task (ISO in created/deadline) and make them interactive
-            for (var d = 1; d <= days; d++) { grid.appendChild(makeDayCell(y, m, d, months, now)); }
-        }
-        function dayItems(iso) {
-            return state.tasks.filter(function (t) { return t.created === iso || t.deadline === iso; })
-                              .map(function (t) { return t.project; });
-        }
-        function makeDayCell(y, m, d, months, now) {
-            var cell = document.createElement('div');
-            cell.className = 'cal-cell';
-            cell.setAttribute('role', 'gridcell');
-            cell.tabIndex = 0;
-            cell.textContent = String(d);
-            var iso = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-            var items = dayItems(iso);
-            var label = months[m] + ' ' + d + ', ' + y;
-            if (y === now.getFullYear() && m === now.getMonth() && d === now.getDate()) {
-                cell.classList.add('today'); cell.setAttribute('aria-current', 'date'); label += ' (today)';
-            }
-            if (items.length) {
-                cell.classList.add('has-task');
-                label += ' — ' + items.length + ' item' + (items.length > 1 ? 's' : '');
-            }
-            cell.setAttribute('aria-label', label);
-            function open() {
-                if (items.length) toast(months[m] + ' ' + d + ': ' + items.join(', '), 'success');
-                else toast('No items on ' + months[m] + ' ' + d + '.');
-            }
-            cell.addEventListener('click', open);
-            cell.addEventListener('keydown', function (ev) {
-                if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); open(); }
-            });
-            return cell;
-        }
-
-        /* ---------- Chat ---------- */
-        function appendMessage(role, opts) {
-            opts = opts || {};
-            var feed = $('#chatFeed');
-            var div = document.createElement('div');
-            div.className = 'message ' + (role === 'user' ? 'user' : 'system');
-            if (opts.text) {
-                var span = document.createElement('span');
-                span.textContent = opts.text; // sanitized via textContent
-                div.appendChild(span);
-            }
-            if (opts.audioURL) {
-                var audio = document.createElement('audio');
-                audio.controls = true; audio.src = opts.audioURL;
-                div.appendChild(audio);
-            }
-            if (opts.fileName) {
-                var chip = document.createElement('div');
-                chip.className = 'file-chip';
-                chip.textContent = '📎 ' + opts.fileName + (opts.fileSize ? '  (' + opts.fileSize + ')' : '');
-                div.appendChild(chip);
-                if (opts.imageURL) {
-                    var img = document.createElement('img');
-                    img.src = opts.imageURL; img.alt = opts.fileName;
-                    img.style.maxWidth = '200px'; img.style.borderRadius = '10px'; img.style.marginTop = '6px';
-                    div.appendChild(img);
-                }
-            }
-            var meta = document.createElement('div');
-            meta.className = 'meta';
-            meta.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            div.appendChild(meta);
-            feed.appendChild(div);
-            feed.scrollTop = feed.scrollHeight;
-            // persist text-only history (skip blob URLs which don't survive reload)
-            if (opts.text && !opts.transient) {
-                state.chat.push({ role: role, text: opts.text, t: Date.now() });
-                if (state.chat.length > 100) state.chat.shift();
-                save();
-            }
-        }
-
-        function assistantReply(userText) {
-            var lower = (userText || '').toLowerCase();
-            var reply;
-            // Prompt Forge intent — open the composer, seeded with the rest of the request.
-            if (/\bforge\b|\b(?:optimi[sz]e|craft|engineer|tighten)\s+(?:a |this |my )?prompt\b/.test(lower)) {
-                // Strip only the trigger phrasing — keep content words like "launch".
-                var seed = userText
-                    .replace(/\b(?:open|launch|start|fire up)\s+(?:the\s+)?(?:prompt\s+)?forge\b/gi, '')
-                    .replace(/\b(?:optimi[sz]e|craft|engineer|tighten)\s+(?:a |this |my )?prompt\b/gi, '')
-                    .replace(/\bprompt\s+forge\b/gi, '')
-                    .replace(/\bforge\b/gi, '')
-                    .replace(/\bplease\b/gi, '')
-                    .replace(/^[\s,.:-]+/, '')
-                    .replace(/\s{2,}/g, ' ').trim();
-                openForge(seed);
-                reply = seed ? 'Opening Prompt Forge with your request.' : 'Opening Prompt Forge.';
-                appendMessage('system', { text: reply });
-                if (state.settings.voiceEnabled) speak(reply);
-                return reply;
-            }
-            if (/\bnew task\b|add task/.test(lower)) { addTask(); reply = 'Added a new task to today’s list.'; }
-            else if (/\bnew project\b|add project/.test(lower)) { addProject(); reply = 'Created a new project row for you.'; }
-            else if (/progress|how many|tasks left/.test(lower)) {
-                var left = state.tasks.length - state.tasks.filter(function (t){return t.status==='Done';}).length;
-                reply = 'You have ' + left + ' of ' + state.tasks.length + ' tasks remaining today.';
-            }
-            else if (/hello|hey|hi\b/.test(lower)) { reply = 'Hey ' + (state.settings.userName.split(' ')[0] || 'there') + ' — ready when you are.'; }
-            else { reply = 'Understood. I’ve logged that and I’m on it.'; }
-            appendMessage('system', { text: reply });
-            if (state.settings.voiceEnabled) speak(reply);
-            return reply;
-        }
-
-        function sendMessage() {
-            var input = $('#chatInput');
-            var msg = input.value.trim();
-            if (!msg) return;
-            appendMessage('user', { text: msg });
-            input.value = '';
-            setTimeout(function () { assistantReply(msg); }, 450);
-        }
-
-        /* ---------- Text-to-speech ---------- */
-        var chosenVoice = null;
-        function listVoices() {
-            return ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
-        }
-        // Brand must be pronounced "Jay Eight Nix" — feed the synthesizer the phonetic
-        // form (browsers don't support SSML <phoneme>), and strip the ™ so it isn't read aloud.
-        function sayable(text) {
-            return String(text == null ? '' : text)
-                .replace(/J\s*8\s*NIX/gi, 'Jay Eight Nix')
-                .replace(/\bJ8NIX\b/gi, 'Jay Eight Nix')
-                .replace(/™/g, '');
-        }
-        // Score voices to prefer the warmest, most natural the device offers.
-        function voiceScore(v) {
-            var n = v.name.toLowerCase(); var s = 0;
-            if (/enhanced|premium|neural|natural/.test(n)) s += 50;
-            ['ava', 'samantha', 'allison', 'serena', 'jenny', 'aria', 'sonia', 'libby', 'emma', 'nora', 'zoe',
-             'google us english', 'google uk english female', 'microsoft aria', 'microsoft jenny']
-                .forEach(function (name, i) { if (n.indexOf(name) !== -1) s += 30 - i; });
-            if (/female/.test(n)) s += 10;
-            if (/en[-_]us/i.test(v.lang)) s += 8; else if (/en[-_]/i.test(v.lang)) s += 5;
-            // de-prioritise the classic novelty / robotic macOS voices
-            if (/compact|eloquence|albert|zarvox|trinoids|bad news|bahh|bells|boing|jester|cellos|deranged|hysterical|wobble|whisper|superstar|organ|bubbles|fred|junior|ralph|kathy/.test(n)) s -= 60;
-            return s;
-        }
-        function pickVoice() {
-            var voices = listVoices();
-            if (!voices.length) return;
-            chosenVoice = null;
-            // 1) explicit user choice from Settings
-            if (state.settings.voiceName) {
-                chosenVoice = voices.find(function (v) { return v.name === state.settings.voiceName; }) || null;
-                if (chosenVoice) return;
-            }
-            // 2) highest-scoring (warmest/most natural) English voice
-            var en = voices.filter(function (v) { return /en[-_]/i.test(v.lang); });
-            var pool = en.length ? en : voices;
-            chosenVoice = pool.reduce(function (best, v) { return voiceScore(v) > voiceScore(best) ? v : best; }, pool[0]);
-        }
-        function browserSpeak(spoken) {
-            if (!('speechSynthesis' in window)) return;
-            try {
-                speechSynthesis.cancel();
-                var u = new SpeechSynthesisUtterance(spoken);
-                if (!chosenVoice) pickVoice();
-                if (chosenVoice) u.voice = chosenVoice;
-                // Slightly slower + natural pitch for a warmer, less robotic cadence.
-                u.pitch = 1.0; u.rate = 0.92; u.volume = 1;
-                speechSynthesis.speak(u);
-            } catch (e) {}
-        }
-        // Optional premium neural voice (ElevenLabs) — only if the user pasted their own
-        // key in Settings. Falls back to the browser voice on any failure.
-        var premiumAudio = null;
-        function speakPremium(spoken, onFail) {
-            try {
-                var voiceId = state.settings.ttsVoiceId || 'EXAVITQu4vr4xnSDxMaL'; // "Sarah" — warm female default
-                fetch('https://api.elevenlabs.io/v1/text-to-speech/' + encodeURIComponent(voiceId), {
-                    method: 'POST',
-                    headers: { 'xi-api-key': state.settings.ttsKey, 'content-type': 'application/json', 'accept': 'audio/mpeg' },
-                    body: JSON.stringify({ text: spoken, model_id: 'eleven_turbo_v2_5', voice_settings: { stability: 0.45, similarity_boost: 0.8 } })
-                }).then(function (res) {
-                    if (!res.ok) throw new Error('tts ' + res.status);
-                    return res.blob();
-                }).then(function (blob) {
-                    if (premiumAudio) { try { premiumAudio.pause(); } catch (e) {} }
-                    var url = URL.createObjectURL(blob);
-                    premiumAudio = new Audio(url);
-                    premiumAudio.onended = function () { URL.revokeObjectURL(url); };
-                    premiumAudio.play();
-                }).catch(function () { if (onFail) onFail(); });
-            } catch (e) { if (onFail) onFail(); }
-        }
-        function speak(text) {
-            var spoken = sayable(text);
-            if (state.settings.ttsKey) speakPremium(spoken, function () { browserSpeak(spoken); });
-            else browserSpeak(spoken);
-        }
-        if ('speechSynthesis' in window) {
-            speechSynthesis.onvoiceschanged = pickVoice;
-            pickVoice();
-        }
-
-        /* ---------- Voice memo (MediaRecorder) ---------- */
-        var mediaRecorder = null, chunks = [], recording = false;
-        function toggleRecord() {
-            if (!navigator.mediaDevices || !window.MediaRecorder) {
-                toast('Voice recording not supported in this browser.', 'urgent'); return;
-            }
-            if (recording) { mediaRecorder.stop(); return; }
-            navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
-                chunks = [];
-                mediaRecorder = new MediaRecorder(stream);
-                mediaRecorder.ondataavailable = function (e) { if (e.data.size) chunks.push(e.data); };
-                mediaRecorder.onstop = function () {
-                    var blob = new Blob(chunks, { type: 'audio/webm' });
-                    var url = URL.createObjectURL(blob);
-                    appendMessage('user', { fileName: 'Voice memo', audioURL: url, transient: true });
-                    stream.getTracks().forEach(function (t) { t.stop(); });
-                    recording = false;
-                    var b = $('#recBtn'); b.textContent = '🎤 Record'; b.classList.remove('listening');
-                    toast('Voice memo saved to chat.', 'success');
-                };
-                mediaRecorder.start();
-                recording = true;
-                var b = $('#recBtn'); b.innerHTML = '<span class="rec-dot"></span>Stop'; b.classList.add('listening');
-            }).catch(function () { toast('Microphone permission denied.', 'urgent'); });
-        }
-
-        /* ---------- Wake-word / speech recognition ("Hey J8NIX") ---------- */
-        var recognition = null, wakeOn = false;
-        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        function toggleWake() {
-            if (!SR) { toast('Speech recognition not supported in this browser.', 'urgent'); return; }
-            var btn = $('#wakeBtn');
-            if (wakeOn) {
-                wakeOn = false; if (recognition) recognition.stop();
-                btn.textContent = '🛜 Wake word: off'; btn.setAttribute('aria-pressed', 'false'); btn.classList.remove('listening');
-                $('#voiceState').textContent = '';
-                return;
-            }
-            recognition = new SR();
-            recognition.continuous = true; recognition.interimResults = false; recognition.lang = 'en-US';
-            recognition.onresult = function (e) {
-                var transcript = '';
-                for (var i = e.resultIndex; i < e.results.length; i++) transcript += e.results[i][0].transcript;
-                transcript = transcript.trim();
-                var WAKE = /hey,?\s*(j[\s-]*8?\s*nix|jay\s*(?:eight|8)?\s*nix|jay\s*nix|janux|jenix|genix|jaynix)/i;
-                if (WAKE.test(transcript)) {
-                    var cmd = transcript.replace(new RegExp('.*?(' + WAKE.source + ')', 'i'), '').trim();
-                    $('#voiceState').textContent = '• heard you';
-                    if (cmd) { appendMessage('user', { text: cmd }); assistantReply(cmd); }
-                    else { appendMessage('system', { text: 'Yes ' + (state.settings.userName.split(' ')[0]||'') + '? I’m listening.' }); speak('Yes? I’m listening.'); }
-                }
-            };
-            recognition.onerror = function (ev) {
-                if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
-                    toast('Microphone blocked — wake word off.', 'urgent'); toggleWake();
-                }
-            };
-            recognition.onend = function () { if (wakeOn) { try { recognition.start(); } catch (e) {} } };
-            try {
-                recognition.start();
-                wakeOn = true;
-                btn.textContent = '🛜 Wake word: on'; btn.setAttribute('aria-pressed', 'true'); btn.classList.add('listening');
-                $('#voiceState').textContent = '• say “Hey J8NIX”';
-                toast('Listening for “Hey J8NIX”.', 'success');
-            } catch (e) { toast('Could not start listening.', 'urgent'); }
-        }
-
-        /* ---------- File drag & drop to chat ---------- */
-        function bytes(n) {
-            if (n < 1024) return n + ' B';
-            if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
-            return (n / 1048576).toFixed(1) + ' MB';
-        }
-        function handleFiles(files) {
-            Array.prototype.forEach.call(files, function (f) {
-                var opts = { fileName: f.name, fileSize: bytes(f.size), transient: true };
-                if (/^image\//.test(f.type)) opts.imageURL = URL.createObjectURL(f);
-                appendMessage('user', opts);
-            });
-            toast(files.length + ' file' + (files.length > 1 ? 's' : '') + ' attached.', 'success');
-            setTimeout(function () { appendMessage('system', { text: 'Got your file' + (files.length > 1 ? 's' : '') + ' — I’ll reference ' + (files.length > 1 ? 'them' : 'it') + ' for this project.' }); }, 500);
-        }
-        (function setupDnD() {
-            var feed = $('#chatFeed');
-            ['dragenter', 'dragover'].forEach(function (ev) {
-                feed.addEventListener(ev, function (e) { e.preventDefault(); feed.classList.add('dragover'); });
-            });
-            ['dragleave', 'drop'].forEach(function (ev) {
-                feed.addEventListener(ev, function (e) { e.preventDefault(); feed.classList.remove('dragover'); });
-            });
-            feed.addEventListener('drop', function (e) { if (e.dataTransfer && e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
-        })();
-
-        /* ---------- Drive mode + geolocation speed ---------- */
-        var geoWatch = null;
-        function startDriveDetection() {
-            var badge = $('#driveBadge');
-            if (!state.settings.driveMode || !('geolocation' in navigator)) { badge.hidden = true; return; }
-            badge.hidden = false;
-            geoWatch = navigator.geolocation.watchPosition(function (pos) {
-                var speed = pos.coords.speed; // m/s or null
-                if (speed == null) { $('#driveLabel').textContent = 'Stationary'; badge.classList.remove('drive-on'); $('#speedLine').textContent = ''; return; }
-                var kmh = speed * 3.6;
-                $('#speedLine').textContent = kmh > 1 ? Math.round(kmh) + ' km/h' : '';
-                if (kmh > 8) {
-                    badge.classList.add('drive-on'); $('#driveLabel').textContent = 'Drive mode';
-                    if (!badge.dataset.announced) { badge.dataset.announced = '1'; toast('Drive mode on — voice-first, big touch targets.', 'success'); }
+                var actions = el('div', 'pc-actions');
+                if (p.url) {
+                    var open = el('a', 'pc-open'); open.href = p.url; open.target = '_blank'; open.rel = 'noopener noreferrer';
+                    open.appendChild(document.createTextNode((p.status === 'live' ? 'Open' : 'Test') + ' ↗')); open.title = p.url;
+                    open.addEventListener('click', function (e) { e.stopPropagation(); }); actions.appendChild(open);
                 } else {
-                    badge.classList.remove('drive-on'); $('#driveLabel').textContent = 'Stationary'; delete badge.dataset.announced;
+                    var na = el('span', 'pc-open disabled', 'No live URL'); actions.appendChild(na);
                 }
-            }, function () { $('#driveLabel').textContent = 'Location off'; }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 });
+                if (p.kit) {
+                    var kit = el('a', 'pc-open pc-kit'); kit.href = p.kit; kit.target = '_blank'; kit.rel = 'noopener noreferrer'; kit.textContent = 'Kit ↗'; kit.title = p.kit;
+                    kit.addEventListener('click', function (e) { e.stopPropagation(); }); actions.appendChild(kit);
+                }
+                var det = el('button', 'pc-details', 'Details'); det.addEventListener('click', function (e) { e.stopPropagation(); openProject(p.key); }); actions.appendChild(det);
+                card.appendChild(actions);
+
+                card.style.cursor = 'pointer';
+                card.addEventListener('click', function () { openProject(p.key); });
+                grid.appendChild(card);
+            });
         }
-        function stopDriveDetection() {
-            if (geoWatch != null) { navigator.geolocation.clearWatch(geoWatch); geoWatch = null; }
-            $('#driveBadge').hidden = true; $('#speedLine').textContent = '';
+        // If a project is no longer "waiting", drop its auto waiting-panel item; if it becomes waiting, ensure one exists.
+        function syncWaitingWithStatus(p) {
+            var item = state.waiting.find(function (w) { return w.pk === p.key; });
+            if (p.status === 'wait' && !item) {
+                var open = p.ship.filter(function (x) { return !x.done; }).map(function (x) { return x.t; });
+                state.waiting.push({ id: 'w_' + p.key, pk: p.key, proj: p.name, pri: 'med', note: '', doing: open.length ? open : ['Define what it needs'], link: p.url ? { label: 'Open', url: p.url } : null });
+            } else if (p.status !== 'wait' && item && /^w_/.test(item.id)) {
+                state.waiting = state.waiting.filter(function (w) { return w !== item; });
+            }
+            save(); renderWaiting();
         }
 
-        /* ---------- Clock ---------- */
-        function tickClock() {
-            $('#clockLabel').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        /* ---------- Waiting-on-You rail ---------- */
+        function renderWaiting() {
+            var list = $('#waitList'); list.textContent = '';
+            var order = { high: 0, med: 1, low: 2 };
+            var items = state.waiting.slice().sort(function (a, b) { return order[a.pri] - order[b.pri]; });
+            $('#waitCount').textContent = items.length;
+            if (!items.length) {
+                var es = el('div', 'empty-state'); es.appendChild(el('div', 'em-emoji', '✅'));
+                es.appendChild(el('div', null, 'Nothing is waiting on you. Clean board.')); list.appendChild(es); return;
+            }
+            items.forEach(function (w) {
+                var row = el('div', 'wait-item');
+                var top = el('div', 'wait-top');
+                var dot = el('span', 'pri-dot pri-' + w.pri); dot.title = w.pri + ' priority'; dot.setAttribute('aria-label', w.pri + ' priority'); top.appendChild(dot);
+                top.appendChild(el('span', 'wait-proj', w.proj));
+                var pk = projByKey(w.pk);
+                if (pk) { var tag = el('span', 'wait-tag sp-' + STATUS[pk.status].cls, STATUS[pk.status].label); top.appendChild(tag); }
+                row.appendChild(top);
+
+                var ul = el('ul', 'wait-do'); (w.doing || []).forEach(function (d) { ul.appendChild(el('li', null, d)); }); row.appendChild(ul);
+                if (w.note) row.appendChild(el('div', 'wait-note', '⏸ ' + w.note));
+
+                var acts = el('div', 'wait-actions');
+                if (w.link && w.link.url) {
+                    var a = el('a', 'link-btn'); a.href = w.link.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.title = w.link.url;
+                    a.appendChild(document.createTextNode(w.link.label + ' ↗')); acts.appendChild(a);
+                }
+                if (w.pk) { var d = el('button', 'detail-btn', 'Open project'); d.addEventListener('click', function () { openProject(w.pk); }); acts.appendChild(d); }
+                else if (w.proj === 'Live products') { var lv = el('button', 'detail-btn', 'Show live →'); lv.addEventListener('click', function () { filter = 'live'; renderPulse(); renderProjects(); $('#projGrid').scrollIntoView({ block: 'nearest' }); }); acts.appendChild(lv); }
+                var del = el('button', 'detail-btn', '✕'); del.title = 'Remove from waiting'; del.setAttribute('aria-label', 'Remove ' + w.proj + ' from waiting');
+                del.addEventListener('click', function () { state.waiting = state.waiting.filter(function (x) { return x !== w; }); save(); renderWaiting(); toast('Removed from waiting.'); });
+                acts.appendChild(del);
+                row.appendChild(acts);
+                list.appendChild(row);
+            });
+        }
+        function addWaiting() {
+            var proj = prompt('What project is waiting on you?'); if (!proj) return;
+            var todo = prompt('What do you need to do? (one line)') || 'Decide next step';
+            state.waiting.push({ id: 'w_' + Date.now(), pk: '', proj: proj.trim(), pri: 'med', note: '', doing: [todo.trim()], link: null });
+            save(); renderWaiting(); toast('Added to waiting.', 'success');
         }
 
-        /* ---------- Modal (settings + onboarding) ---------- */
+        /* ---------- Modal core (focus-trapped) ---------- */
         var modal = $('#modalOverlay'), lastFocus = null;
         function openModal(title, bodyNodes, footNodes, wide) {
             $('#modalTitle').textContent = title;
-            var body = $('#modalBody'); body.textContent = '';
-            bodyNodes.forEach(function (n) { body.appendChild(n); });
-            var foot = $('#modalFoot'); foot.textContent = '';
-            footNodes.forEach(function (n) { foot.appendChild(n); });
-            var inner = modal.querySelector('.modal');
-            if (inner) inner.classList.toggle('wide', !!wide);
-            lastFocus = document.activeElement;
-            modal.classList.add('open');
-            document.body.style.overflow = 'hidden';
+            var body = $('#modalBody'); body.textContent = ''; bodyNodes.forEach(function (n) { body.appendChild(n); });
+            var foot = $('#modalFoot'); foot.textContent = ''; footNodes.forEach(function (n) { foot.appendChild(n); });
+            var inner = modal.querySelector('.modal'); if (inner) inner.classList.toggle('wide', !!wide);
+            lastFocus = document.activeElement; modal.classList.add('open');
             var f = modal.querySelector('button, input, select, textarea'); if (f) f.focus();
         }
-        function closeModal() {
-            modal.classList.remove('open');
-            document.body.style.overflow = '';
-            var inner = modal.querySelector('.modal');
-            if (inner) inner.classList.remove('wide');
-            if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
-        }
-        // Keep keyboard focus inside the dialog while it is open (WCAG 2.4.3)
+        function closeModal() { modal.classList.remove('open'); var inner = modal.querySelector('.modal'); if (inner) inner.classList.remove('wide'); if (lastFocus && document.contains(lastFocus)) lastFocus.focus(); }
         modal.addEventListener('keydown', function (e) {
             if (e.key !== 'Tab' || !modal.classList.contains('open')) return;
-            var f = modal.querySelectorAll('button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
-            if (!f.length) return;
+            var f = modal.querySelectorAll('button, input, select, textarea, [tabindex]:not([tabindex="-1"])'); if (!f.length) return;
             var first = f[0], last = f[f.length - 1];
             if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
             else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
         });
+        $('#modalClose').addEventListener('click', closeModal);
+        modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && modal.classList.contains('open')) closeModal(); });
 
         function field(labelText, inputEl) {
-            var wrap = document.createElement('div'); wrap.className = 'field';
-            var lbl = document.createElement('label'); lbl.textContent = labelText;
-            var id = 'f_' + Math.abs(labelText.split('').reduce(function(a,c){return a*31+c.charCodeAt(0)|0;},7));
-            lbl.setAttribute('for', id); inputEl.id = id;
-            wrap.appendChild(lbl); wrap.appendChild(inputEl); return wrap;
+            var wrap = el('div', 'field'); var lbl = el('label', null, labelText);
+            var id = 'f_' + Math.abs(labelText.split('').reduce(function (a, c) { return a * 31 + c.charCodeAt(0) | 0; }, 7));
+            lbl.setAttribute('for', id); inputEl.id = id; wrap.appendChild(lbl); wrap.appendChild(inputEl); return wrap;
         }
         function toggleRow(labelText, checked, onChange) {
-            var row = document.createElement('div'); row.className = 'switch-row';
-            var span = document.createElement('span'); span.textContent = labelText; span.style.fontWeight = '600';
-            var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!checked;
-            cb.style.width = '20px'; cb.style.height = '20px';
-            cb.addEventListener('change', function () { onChange(cb.checked); });
-            row.appendChild(span); row.appendChild(cb); return row;
+            var row = el('div', 'switch-row'); var span = el('span', null, labelText); span.style.fontWeight = '600';
+            var cb = el('input'); cb.type = 'checkbox'; cb.checked = !!checked; cb.style.width = '20px'; cb.style.height = '20px';
+            cb.addEventListener('change', function () { onChange(cb.checked); }); row.appendChild(span); row.appendChild(cb); return row;
         }
-        function btn(label, cls, onClick) {
-            var b = document.createElement('button'); b.className = cls; b.textContent = label;
-            b.addEventListener('click', onClick); return b;
-        }
-
         function aboutBox() {
-            var box = document.createElement('div'); box.className = 'about-box';
-            var badge = document.createElement('span'); badge.className = 'logo-badge';
-            var logo = document.createElement('img'); logo.src = '3shamrocks_black.png'; logo.alt = '3Shamrocks Studio';
-            logo.onerror = function () { badge.style.display = 'none'; };
-            badge.appendChild(logo);
-            var copy = document.createElement('div'); copy.className = 'copy';
-            // Build with a real ™ superscript while keeping text sanitized
-            copy.appendChild(document.createTextNode('© 2026 3Shamrocks Studio. All rights reserved.'));
-            copy.appendChild(document.createElement('br'));
-            var prod = document.createElement('span');
-            prod.appendChild(document.createTextNode('J8NIX'));
-            var tm = document.createElement('span'); tm.className = 'tm'; tm.textContent = '™';
-            prod.appendChild(tm);
-            prod.appendChild(document.createTextNode(' v1.2.0 — a product of 3Shamrocks Studio.'));
-            copy.appendChild(prod);
-            box.appendChild(badge); box.appendChild(copy);
-            return box;
+            var box = el('div', 'about-box'); var badge = el('span', 'logo-badge');
+            var logo = el('img'); logo.src = '3shamrocks_black.png'; logo.alt = '3Shamrocks Studio'; logo.height = 24; logo.onerror = function () { badge.style.display = 'none'; }; badge.appendChild(logo);
+            var copy = el('div', 'copy'); copy.appendChild(document.createTextNode('© 2026 3Shamrocks Studio. All rights reserved.')); copy.appendChild(el('br'));
+            var prod = el('span'); prod.appendChild(document.createTextNode('J8NIX')); var tm = el('span', 'tm', '™'); prod.appendChild(tm);
+            prod.appendChild(document.createTextNode(' v' + VERSION + ' — Command Center.')); copy.appendChild(prod);
+            box.appendChild(badge); box.appendChild(copy); return box;
         }
 
-        function openSettings() {
-            var nameIn = document.createElement('input'); nameIn.type = 'text'; nameIn.value = state.settings.userName;
-            var orgIn = document.createElement('input'); orgIn.type = 'text'; orgIn.value = state.settings.org;
+        /* ---------- Project detail modal ---------- */
+        function openProject(key) {
+            var p = projByKey(key); if (!p) return;
+            var meta = el('div', 'pd-meta');
+            meta.appendChild(makeStatusPill(p));
+            meta.appendChild(el('span', null, p.cat));
+            var body = [meta];
 
-            // Voice picker — populated from the platform's speech-synthesis voices.
-            var voiceSel = document.createElement('select');
-            (function fillVoices() {
-                voiceSel.textContent = '';
-                var auto = document.createElement('option'); auto.value = ''; auto.textContent = 'Auto (warm female)'; voiceSel.appendChild(auto);
-                listVoices().forEach(function (v) {
-                    var op = document.createElement('option');
-                    op.value = v.name; op.textContent = v.name + ' (' + v.lang + ')';
-                    if (v.name === state.settings.voiceName) op.selected = true;
-                    voiceSel.appendChild(op);
+            if (p.url) { var lk = el('div'); var a = el('a', 'pd-link'); a.href = p.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = p.url; lk.appendChild(a); body.push(lk); }
+            else { body.push(el('div', 'forge-note', 'No public URL yet — this one ships before it has a live link.')); }
+
+            body.push(el('div', 'ship-label', 'What it takes to ship'));
+            var ul = el('ul', 'ship-list'); body.push(ul);
+            function paintShip() {
+                ul.textContent = '';
+                if (!p.ship.length) { ul.appendChild(el('div', 'forge-note', 'No tasks yet — add the first one below.')); return; }
+                p.ship.forEach(function (item, i) {
+                    var li = el('li', 'ship-item' + (item.done ? ' done' : ''));
+                    var cb = el('input'); cb.type = 'checkbox'; cb.checked = item.done; cb.setAttribute('aria-label', item.t);
+                    cb.addEventListener('change', function () { item.done = cb.checked; save(); li.classList.toggle('done', item.done); renderProjects(); });
+                    var tx = el('span', 'ship-text', item.t);
+                    var rm = el('button', 'icon-btn', '🗑'); rm.title = 'Remove'; rm.setAttribute('aria-label', 'Remove task'); rm.addEventListener('click', function () { p.ship.splice(i, 1); save(); paintShip(); renderProjects(); });
+                    li.appendChild(cb); li.appendChild(tx); li.appendChild(rm); ul.appendChild(li);
                 });
-            })();
-            // Voices can load asynchronously on some browsers.
-            if ('speechSynthesis' in window && !listVoices().length) {
-                speechSynthesis.onvoiceschanged = function () { pickVoice(); };
             }
-            // Optional premium neural voice (ElevenLabs, BYO key) — the path to a truly human voice.
-            var ttsKeyIn = document.createElement('input'); ttsKeyIn.type = 'password'; ttsKeyIn.autocomplete = 'off';
-            ttsKeyIn.placeholder = 'Paste your ElevenLabs API key (optional)'; ttsKeyIn.value = state.settings.ttsKey || '';
-            var ttsVoiceIn = document.createElement('input'); ttsVoiceIn.type = 'text';
-            ttsVoiceIn.placeholder = 'Voice ID (optional — defaults to a warm female)'; ttsVoiceIn.value = state.settings.ttsVoiceId || '';
+            paintShip();
+            var addWrap = el('div', 'ship-add'); var addIn = el('input'); addIn.type = 'text'; addIn.placeholder = 'Add a step to ship…';
+            var addBtn = btn('Add', 'ghost', function () { var v = addIn.value.trim(); if (!v) return; p.ship.push({ t: v, done: false }); addIn.value = ''; save(); paintShip(); renderProjects(); addIn.focus(); });
+            addIn.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); addBtn.click(); } });
+            addWrap.appendChild(addIn); addWrap.appendChild(addBtn); body.push(addWrap);
 
-            var voiceTest = btn('🔊 Test voice', 'ghost', function () {
-                // Apply the typed values so the test reflects exactly what you'd save.
-                state.settings.voiceName = voiceSel.value;
-                state.settings.ttsKey = ttsKeyIn.value.trim();
-                state.settings.ttsVoiceId = ttsVoiceIn.value.trim();
-                pickVoice();
-                speak('Hi, this is J8NIX. How can I make your operations smarter today?');
-            });
-            voiceTest.style.marginTop = '8px';
+            var foot = [];
+            if (p.url) { var open = btn((p.status === 'live' ? '🔗 Open live ↗' : '🧪 Test live ↗'), 'primary', function () { window.open(p.url, '_blank', 'noopener'); }); foot.push(open); }
+            if (p.kit) { foot.push(btn('🎨 Brand kit ↗', 'ghost', function () { window.open(p.kit, '_blank', 'noopener'); })); }
+            foot.push(btn('Ask Claude about this', 'ghost', function () { closeModal(); $('#claudeCtx').value = p.name; $('#claudeInput').value = 'Re: ' + p.name + ' — '; $('#claudeInput').focus(); }));
+            foot.push(btn('Close', 'ghost', closeModal));
+            openModal(p.name, body, foot);
+        }
 
-            var ttsHead = document.createElement('div'); ttsHead.className = 'forge-label'; ttsHead.textContent = 'Optional: premium neural voice';
-            var ttsWarn = document.createElement('div'); ttsWarn.className = 'warn-box';
-            var tw = document.createElement('strong'); tw.textContent = '⚠ Built-in browser voices are limited. ';
-            ttsWarn.appendChild(tw);
-            ttsWarn.appendChild(document.createTextNode(
-                'For a genuinely human, warm voice, paste your own ElevenLabs API key — J8NIX will speak through it (falling back to the system voice if it fails). ' +
-                'The key is stored only in this browser and is exposed to page scripts, so use a limited key; the production-safe path is a backend proxy (see README). ' +
-                'Leave blank to use the best built-in system voice.'
-            ));
+        /* ---------- Message Claude composer (honest: copy-to-paste only) ---------- */
+        function fillCtx() {
+            var sel = $('#claudeCtx'); sel.textContent = ''; sel.appendChild(new Option('No project context', ''));
+            state.projects.forEach(function (p) { sel.appendChild(new Option(p.name, p.name)); });
+        }
+        function copyText(text, okMsg) {
+            function fallback() { try { var ta = el('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); ta.remove(); toast(okMsg || 'Copied.', 'success'); } catch (e) { toast('Copy failed — select and copy manually.', 'urgent'); } }
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { toast(okMsg || 'Copied.', 'success'); }, fallback); else fallback();
+        }
+        function copyClaude() {
+            var msg = $('#claudeInput').value.trim();
+            if (!msg) { toast('Type a command first.', 'urgent'); $('#claudeInput').focus(); return; }
+            var ctx = $('#claudeCtx').value;
+            var header = '[J8NIX → Claude' + (ctx ? ' · ' + ctx : '') + ']';
+            copyText(header + '\n' + msg, 'Command copied — paste it to Claude in chat.');
+        }
 
-            // Optional AI dispatch (BYO key).
-            var providerSel = document.createElement('select');
-            [['anthropic', 'Anthropic (Claude)'], ['openai', 'OpenAI']].forEach(function (o) {
-                var op = document.createElement('option'); op.value = o[0]; op.textContent = o[1];
-                if (o[0] === (state.settings.aiProvider || 'anthropic')) op.selected = true;
-                providerSel.appendChild(op);
-            });
-            var modelIn = document.createElement('input'); modelIn.type = 'text';
-            modelIn.placeholder = state.settings.aiProvider === 'openai' ? 'gpt-4o-mini' : 'claude-opus-4-8';
-            modelIn.value = state.settings.apiModel || '';
-            var keyIn = document.createElement('input'); keyIn.type = 'password'; keyIn.autocomplete = 'off';
-            keyIn.placeholder = 'Paste your own API key (optional)';
-            keyIn.value = state.settings.apiKey || '';
+        /* ---------- Help ---------- */
+        function openHelp() {
+            var lead = el('p'); lead.style.fontSize = '14px';
+            lead.textContent = 'J8NIX is your 3Shamrocks Studio command center — one place to see every project, its status, and exactly what is waiting on you. Everything is clickable and actionable.';
+            var ul = el('ul'); ul.style.cssText = 'list-style:none;padding:0;margin:14px 0 0;display:flex;flex-direction:column;gap:10px;';
+            [['⏳', 'Waiting on You', 'Your priority queue. Each item shows what to do and links straight to the thing to review, test or decide. Highest priority on top.'],
+             ['🗂', 'Projects', 'Every project as a card with a live status pill (click to cycle) and a working Open / Test button to the real URL. Filter by status with the chips.'],
+             ['📋', 'Project details', 'Click a card to see its ship checklist — tick items off as you go. Add or remove steps; everything saves locally.'],
+             ['💬', 'Message Claude', 'Type a command and hit Copy. It formats a ready-to-paste message for Claude in chat. Honest: it does NOT send to a live AI — that bridge needs a backend (future phase).'],
+             ['🔥', 'Prompt Forge', 'Turn plain words into a tight, token-efficient AI prompt. Works fully offline.']
+            ].forEach(function (p) { var li = el('li'); li.style.cssText = 'display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--text-sub)'; var s = el('span', null, p[0]); s.style.fontSize = '16px'; var t = el('span'); var b = el('strong', null, p[1] + ' — '); b.style.color = 'var(--text)'; t.appendChild(b); t.appendChild(document.createTextNode(p[2])); li.appendChild(s); li.appendChild(t); ul.appendChild(li); });
+            var note = el('p', 'forge-note'); note.textContent = 'What’s real: every status, checklist and link works now and persists in your browser. What’s a future phase: a live AI bridge (Message Claude sending automatically) needs a backend — see README.';
+            openHelp.last = openModal('What is J8NIX?', [lead, ul, note, aboutBox()], [btn('Close', 'primary', closeModal)]);
+        }
 
-            var warn = document.createElement('div'); warn.className = 'warn-box';
-            var wb = document.createElement('strong'); wb.textContent = '⚠ Client-side keys are insecure. ';
-            warn.appendChild(wb);
-            warn.appendChild(document.createTextNode(
-                'A key pasted here is stored only in this browser (localStorage) and is exposed to any script on the page — never use a production or shared key. ' +
-                'The recommended production path is a backend proxy that holds the key server-side. ' +
-                'Leave this blank to use Prompt Forge fully offline (generate + copy).'
-            ));
+        /* ---------- Settings ---------- */
+        function applyIdentity() { $('#userName').textContent = state.settings.userName; $('#userOrg').textContent = state.settings.org; }
+        function openSettings() {
+            var nameIn = el('input'); nameIn.type = 'text'; nameIn.value = state.settings.userName;
+            var orgIn = el('input'); orgIn.type = 'text'; orgIn.value = state.settings.org;
+            var voiceSel = el('select');
+            (function () { voiceSel.appendChild(new Option('Auto (warm voice)', '')); listVoices().forEach(function (v) { var o = new Option(v.name + ' (' + v.lang + ')', v.name); if (v.name === state.settings.voiceName) o.selected = true; voiceSel.appendChild(o); }); })();
+            var voiceTest = btn('🔊 Test voice', 'ghost', function () { state.settings.voiceName = voiceSel.value; pickVoice(); speak('Hi Dave, this is J8NIX. Here is your command center.'); }); voiceTest.style.marginTop = '8px';
 
-            var aiHead = document.createElement('div'); aiHead.className = 'forge-label'; aiHead.textContent = 'Optional: live AI refine (advanced)';
+            var ttsHead = el('div', 'forge-label', 'Optional: premium neural voice');
+            var ttsWarn = el('div', 'warn-box'); var tw = el('strong', null, '⚠ Built-in voices vary by device. '); ttsWarn.appendChild(tw);
+            ttsWarn.appendChild(document.createTextNode('For a genuinely human voice, paste your own ElevenLabs key — stored only in this browser and exposed to page scripts, so use a limited key. Production-safe path is a backend proxy (README).'));
+            var ttsKeyIn = el('input'); ttsKeyIn.type = 'password'; ttsKeyIn.autocomplete = 'off'; ttsKeyIn.value = state.settings.ttsKey || ''; ttsKeyIn.placeholder = 'ElevenLabs API key (optional)';
+            var ttsVoiceIn = el('input'); ttsVoiceIn.type = 'text'; ttsVoiceIn.value = state.settings.ttsVoiceId || ''; ttsVoiceIn.placeholder = 'Voice ID (optional)';
 
-            var body = [
-                field('Your name', nameIn),
-                field('Organization', orgIn),
+            var aiHead = el('div', 'forge-label', 'Optional: live AI refine for Prompt Forge (advanced)');
+            var warn = el('div', 'warn-box'); var wb = el('strong', null, '⚠ Client-side keys are insecure. '); warn.appendChild(wb);
+            warn.appendChild(document.createTextNode('A key pasted here is stored only in this browser and exposed to any page script — never use a production key. Leave blank to keep Prompt Forge fully offline.'));
+            var providerSel = el('select'); [['anthropic', 'Anthropic (Claude)'], ['openai', 'OpenAI']].forEach(function (o) { var op = new Option(o[1], o[0]); if (o[0] === (state.settings.aiProvider || 'anthropic')) op.selected = true; providerSel.appendChild(op); });
+            var modelIn = el('input'); modelIn.type = 'text'; modelIn.value = state.settings.apiModel || ''; modelIn.placeholder = state.settings.aiProvider === 'openai' ? 'gpt-4o-mini' : 'claude-opus-4-8';
+            var keyIn = el('input'); keyIn.type = 'password'; keyIn.autocomplete = 'off'; keyIn.value = state.settings.apiKey || ''; keyIn.placeholder = 'Your API key (local only)';
+            providerSel.addEventListener('change', function () { modelIn.placeholder = providerSel.value === 'openai' ? 'gpt-4o-mini' : 'claude-opus-4-8'; });
+
+            var body = [ field('Your name', nameIn), field('Organization', orgIn),
                 toggleRow('Voice replies (text-to-speech)', state.settings.voiceEnabled, function (v) { state.settings.voiceEnabled = v; save(); }),
-                field('Assistant voice', voiceSel),
-                voiceTest,
-                ttsHead,
-                ttsWarn,
-                field('ElevenLabs API key (local only)', ttsKeyIn),
-                field('Voice ID (optional)', ttsVoiceIn),
-                toggleRow('Desktop notifications', state.settings.notifications, function (v) {
-                    state.settings.notifications = v; save();
-                    if (v && 'Notification' in window && Notification.permission !== 'granted') Notification.requestPermission();
-                }),
-                toggleRow('Drive mode (geolocation speed)', state.settings.driveMode, function (v) {
-                    state.settings.driveMode = v; save(); if (v) startDriveDetection(); else stopDriveDetection();
-                }),
-                aiHead,
-                warn,
-                field('AI provider', providerSel),
-                field('Model (optional)', modelIn),
-                field('API key (stored locally only)', keyIn),
-                aboutBox()
-            ];
-            providerSel.addEventListener('change', function () {
-                modelIn.placeholder = providerSel.value === 'openai' ? 'gpt-4o-mini' : 'claude-opus-4-8';
-            });
+                field('Assistant voice', voiceSel), voiceTest, ttsHead, ttsWarn, field('ElevenLabs key (local only)', ttsKeyIn), field('Voice ID (optional)', ttsVoiceIn),
+                aiHead, warn, field('AI provider', providerSel), field('Model (optional)', modelIn), field('API key (local only)', keyIn), aboutBox() ];
             var foot = [
-                btn('Reset data', 'ghost', function () {
-                    if (confirm('Reset all tasks, projects and settings to defaults?')) {
-                        localStorage.removeItem(STORE_KEY); location.reload();
-                    }
-                }),
+                btn('Reset data', 'ghost', function () { if (confirm('Reset all projects, waiting items and settings to the seeded 3S defaults?')) { localStorage.removeItem(STORE_KEY); location.reload(); } }),
                 btn('Save', 'primary', function () {
-                    state.settings.userName = nameIn.value.trim() || 'User';
-                    state.settings.org = orgIn.value.trim();
-                    state.settings.voiceName = voiceSel.value;
-                    state.settings.ttsKey = ttsKeyIn.value.trim();
-                    state.settings.ttsVoiceId = ttsVoiceIn.value.trim();
-                    state.settings.aiProvider = providerSel.value;
-                    state.settings.apiModel = modelIn.value.trim();
-                    state.settings.apiKey = keyIn.value.trim();
-                    pickVoice();
-                    $('#userInfo').textContent = state.settings.userName + ' • ' + state.settings.org;
-                    save(); closeModal();
-                    toast(state.settings.apiKey ? 'Settings saved. Live AI refine enabled (your key, this browser only).' : 'Settings saved.', 'success');
+                    state.settings.userName = nameIn.value.trim() || 'Dave Markovich'; state.settings.org = orgIn.value.trim() || '3Shamrocks Studio';
+                    state.settings.voiceName = voiceSel.value; state.settings.ttsKey = ttsKeyIn.value.trim(); state.settings.ttsVoiceId = ttsVoiceIn.value.trim();
+                    state.settings.aiProvider = providerSel.value; state.settings.apiModel = modelIn.value.trim(); state.settings.apiKey = keyIn.value.trim();
+                    pickVoice(); applyIdentity(); save(); closeModal(); toast('Settings saved.', 'success');
                 })
             ];
             openModal('Settings', body, foot);
         }
 
-        function runOnboarding() {
-            var logo = document.createElement('img'); logo.src = 'J8NIX_LOGO.png'; logo.alt = 'J8NIX';
-            var wrap = document.createElement('div'); wrap.className = 'onboard-step';
-            wrap.appendChild(logo);
-            var h = document.createElement('p');
-            h.textContent = 'Welcome to J8NIX — your Smart Operations OS. Edit any table cell, click status pills to advance them, drop files into chat, open 🔥 Prompt Forge to craft token-efficient AI prompts, and say “Hey J8NIX” to talk hands-free.';
-            wrap.appendChild(h);
-            var nameIn = document.createElement('input'); nameIn.type = 'text'; nameIn.value = state.settings.userName; nameIn.placeholder = 'Your name';
-            var foot = [ btn('Get started', 'primary', function () {
-                state.settings.userName = nameIn.value.trim() || 'Dave Markovich';
-                state.settings.onboarded = true;
-                $('#userInfo').textContent = state.settings.userName + ' • ' + state.settings.org;
-                save(); closeModal(); toast('You’re all set. Welcome aboard!', 'success');
-            }) ];
-            openModal('Welcome 👋', [wrap, field('Your name', nameIn)], foot);
+        /* ====================================================================
+           TEXT-TO-SPEECH (browser + optional ElevenLabs) — for the Brief
+           ==================================================================== */
+        var chosenVoice = null;
+        function listVoices() { return ('speechSynthesis' in window) ? speechSynthesis.getVoices() : []; }
+        function sayable(t) { return String(t == null ? '' : t).replace(/J\s*8\s*NIX/gi, 'Jay Eight Nix').replace(/\bJ8NIX\b/gi, 'Jay Eight Nix').replace(/™/g, ''); }
+        function voiceScore(v) {
+            var n = v.name.toLowerCase(), s = 0;
+            if (/enhanced|premium|neural|natural/.test(n)) s += 50;
+            ['ava', 'samantha', 'allison', 'serena', 'jenny', 'aria', 'sonia', 'libby', 'emma', 'nora', 'zoe', 'google us english', 'microsoft aria', 'microsoft jenny'].forEach(function (name, i) { if (n.indexOf(name) !== -1) s += 30 - i; });
+            if (/female/.test(n)) s += 10;
+            if (/en[-_]us/i.test(v.lang)) s += 8; else if (/en[-_]/i.test(v.lang)) s += 5;
+            if (/compact|eloquence|albert|zarvox|trinoids|bells|boing|jester|bahh|bubbles|fred|junior|ralph|kathy|whisper/.test(n)) s -= 60;
+            return s;
         }
+        function pickVoice() {
+            var voices = listVoices(); if (!voices.length) return; chosenVoice = null;
+            if (state.settings.voiceName) { chosenVoice = voices.find(function (v) { return v.name === state.settings.voiceName; }) || null; if (chosenVoice) return; }
+            var en = voices.filter(function (v) { return /en[-_]/i.test(v.lang); }); var pool = en.length ? en : voices;
+            chosenVoice = pool.reduce(function (best, v) { return voiceScore(v) > voiceScore(best) ? v : best; }, pool[0]);
+        }
+        function browserSpeak(spoken) { if (!('speechSynthesis' in window)) return false; try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(spoken); if (!chosenVoice) pickVoice(); if (chosenVoice) u.voice = chosenVoice; u.pitch = 1.0; u.rate = 0.95; speechSynthesis.speak(u); return true; } catch (e) { return false; } }
+        var premiumAudio = null;
+        function speakPremium(spoken, onFail) {
+            try {
+                var voiceId = state.settings.ttsVoiceId || 'EXAVITQu4vr4xnSDxMaL';
+                fetch('https://api.elevenlabs.io/v1/text-to-speech/' + encodeURIComponent(voiceId), { method: 'POST', headers: { 'xi-api-key': state.settings.ttsKey, 'content-type': 'application/json', 'accept': 'audio/mpeg' }, body: JSON.stringify({ text: spoken, model_id: 'eleven_turbo_v2_5', voice_settings: { stability: 0.45, similarity_boost: 0.8 } }) })
+                    .then(function (res) { if (!res.ok) throw new Error('tts'); return res.blob(); })
+                    .then(function (blob) { if (premiumAudio) { try { premiumAudio.pause(); } catch (e) {} } var url = URL.createObjectURL(blob); premiumAudio = new Audio(url); premiumAudio.onended = function () { URL.revokeObjectURL(url); }; premiumAudio.play(); })
+                    .catch(function () { if (onFail) onFail(); });
+            } catch (e) { if (onFail) onFail(); }
+        }
+        function speak(text) { if (!state.settings.voiceEnabled) return; var spoken = sayable(text); if (state.settings.ttsKey) speakPremium(spoken, function () { browserSpeak(spoken); }); else browserSpeak(spoken); }
+        if ('speechSynthesis' in window) { speechSynthesis.onvoiceschanged = pickVoice; pickVoice(); }
+
+        function briefText() {
+            var name = (state.settings.userName.split(' ')[0]) || 'Dave';
+            var order = { high: 0, med: 1, low: 2 };
+            var items = state.waiting.slice().sort(function (a, b) { return order[a.pri] - order[b.pri]; });
+            if (!items.length) return 'Nothing is waiting on you right now, ' + name + '. Clean board.';
+            var msg = name + ', you have ' + items.length + ' item' + (items.length > 1 ? 's' : '') + ' waiting on you. ';
+            var top = items.slice(0, 2).map(function (w) { return w.proj + ': ' + (w.doing[0] || ''); });
+            msg += 'Top of the list — ' + top.join('. Then ') + '.';
+            return msg;
+        }
+        function doBrief() { var t = briefText(); toast(t); speak(t); }
 
         /* ====================================================================
-           PROMPT FORGE — client-side prompt engineering (offline by default)
-           A local heuristic/template engine turns a plain-language request into
-           a tight, token-efficient, well-structured prompt. No API required.
+           PROMPT FORGE (offline by default) — proven engine, carried over
            ==================================================================== */
-
-        // ~4 chars/token is the standard rough estimate for English prompts.
         function estTokens(s) { return Math.max(1, Math.round((s || '').length / 4)); }
-
-        // Progressive filler removal — heavier levels strip more.
         var FORGE_FILLERS = [
             [/\bin order to\b/gi, 'to'],
             [/\b(?:i was wondering if you could|i would like you to|i'd like you to|i want you to|i need you to)\b/gi, ''],
@@ -1402,26 +772,15 @@
             [/\b(?:please|kindly)\b/gi, ''],
             [/\b(?:basically|actually|literally|really|very|just|simply|sort of|kind of|you know|i think|i guess|i believe|maybe|perhaps)\b/gi, '']
         ];
-        function compress(text, level) {
-            var out = text;
-            // Even at Standard (0) strip pure-noise politeness; heavier levels strip more.
-            var n = level <= 0 ? 4 : FORGE_FILLERS.length;
-            for (var i = 0; i < n; i++) out = out.replace(FORGE_FILLERS[i][0], FORGE_FILLERS[i][1]);
-            return out.replace(/\s{2,}/g, ' ').replace(/\s+([,.;:!?])/g, '$1').trim();
-        }
-        // Strip a trailing period so constraints join cleanly with "; ".
-        function joinConstraints(cons) {
-            return cons.map(function (c) { return c.replace(/\.$/, ''); }).join('; ');
-        }
+        function compress(text, level) { var out = text; var n = level <= 0 ? 4 : FORGE_FILLERS.length; for (var i = 0; i < n; i++) out = out.replace(FORGE_FILLERS[i][0], FORGE_FILLERS[i][1]); return out.replace(/\s{2,}/g, ' ').replace(/\s+([,.;:!?])/g, '$1').trim(); }
+        function joinConstraints(c) { return c.map(function (x) { return x.replace(/\.$/, ''); }).join('; '); }
         function detectRole(t) {
-            // Strongest intent first: code, then verb-driven intents, then content nouns last.
-            if (/\b(code|function|bug|refactor|api|script|regex|sql|debug|compile|algorithm|typescript|javascript|python|css|html|stack trace)\b/.test(t)) return 'a senior software engineer';
-            if (/\b(summar(?:y|ize|ise)|tl;dr|condense|digest|recap)\b/.test(t)) return 'an expert summarizer';
-            if (/\b(translate|translation)\b/.test(t)) return 'a professional translator';
+            if (/\b(code|function|bug|refactor|api|script|regex|sql|debug|firebase|typescript|javascript|python|css|html)\b/.test(t)) return 'a senior software engineer';
+            if (/\b(summar(?:y|ize|ise)|tl;dr|condense|recap)\b/.test(t)) return 'an expert summarizer';
             if (/\b(analy(?:ze|se|sis)|research|compare|evaluate|assess|critique)\b/.test(t)) return 'a rigorous analyst';
             if (/\b(plan|strategy|roadmap|outline|schedule|prioriti)\b/.test(t)) return 'a strategic planner';
             if (/\b(design|ui|ux|layout|brand|logo|wireframe)\b/.test(t)) return 'a senior product designer';
-            if (/\b(write|draft|copy|blog|article|essay|email|tweet|post|caption|headline|story|newsletter|tagline|slogan)\b/.test(t)) return 'an expert copywriter';
+            if (/\b(write|draft|copy|blog|article|essay|email|tweet|post|caption|headline|script|newsletter|tagline)\b/.test(t)) return 'an expert copywriter';
             return 'an expert assistant';
         }
         function detectFormat(t) {
@@ -1434,10 +793,8 @@
             return 'concise prose';
         }
         function detectConstraints(t, target) {
-            var c = [];
-            var len = t.match(/\b(?:under|less than|max(?:imum)?(?: of)?|no more than|within|up to)\s+(\d+)\s*(words?|chars?|characters?|sentences?|bullets?|lines?|tokens?)/);
-            if (len) c.push('Limit to ' + len[1] + ' ' + len[2] + '.');
-            else if (/\b(short|brief|concise|tl;dr|one[- ]line|one paragraph)\b/.test(t)) c.push('Keep it brief.');
+            var c = []; var len = t.match(/\b(?:under|less than|max(?:imum)?(?: of)?|no more than|within|up to)\s+(\d+)\s*(words?|chars?|characters?|sentences?|bullets?|lines?|tokens?)/);
+            if (len) c.push('Limit to ' + len[1] + ' ' + len[2] + '.'); else if (/\b(short|brief|concise|tl;dr|one[- ]line|one paragraph)\b/.test(t)) c.push('Keep it brief.');
             if (/\b(formal|professional)\b/.test(t)) c.push('Professional tone.');
             if (/\b(casual|friendly|informal|warm|playful)\b/.test(t)) c.push('Warm, casual tone.');
             if (/\b(beginner|simple|eli5|layman|non[- ]technical)\b/.test(t)) c.push('Explain simply, no jargon.');
@@ -1446,350 +803,74 @@
             c.push('Be concise — no preamble or filler.');
             return c.filter(function (v, i) { return c.indexOf(v) === i; });
         }
-        function cleanTask(text, level) {
-            var t = compress(text, level)
-                .replace(/^[\s,.;:!?-]+/, '')
-                .replace(/^[a-z]/, function (m) { return m.toUpperCase(); });
-            if (!/[.!?]$/.test(t)) t += '.';
-            return t;
-        }
-        // level 0 = Standard (labeled), 1 = Tight, 2 = Tightest
+        function cleanTask(text, level) { var t = compress(text, level).replace(/^[\s,.;:!?-]+/, '').replace(/^[a-z]/, function (m) { return m.toUpperCase(); }); if (!/[.!?]$/.test(t)) t += '.'; return t; }
         function forgePrompt(input, target, ctx, level) {
-            input = (input || '').trim();
-            if (!input) return '';
-            var lower = input.toLowerCase();
-            var role = detectRole(lower);
-            var fmt = detectFormat(lower);
-            var cons = detectConstraints(lower, target);
-            var task = cleanTask(input, level);
+            input = (input || '').trim(); if (!input) return '';
+            var lower = input.toLowerCase(); var role = detectRole(lower), fmt = detectFormat(lower), cons = detectConstraints(lower, target), task = cleanTask(input, level);
             ctx = (ctx || '').trim();
-
-            if (level >= 2) {
-                // Tightest: dense single block, minimal scaffolding.
-                var roleNoun = role.replace(/^an? /, '');
-                var parts = [roleNoun + '.'];
-                if (ctx) parts.push('Ctx: ' + ctx + '.');
-                parts.push(task);
-                parts.push('Limits: ' + joinConstraints(cons) + '.');
-                parts.push('Out: ' + fmt + '.');
-                return compress(parts.join(' '), 2);
-            }
-            if (level === 1) {
-                // Tight: one line, semicolon-joined constraints.
-                var seg = ['You are ' + role + '.'];
-                if (ctx) seg.push('Context: ' + ctx + '.');
-                seg.push(task);
-                seg.push('Constraints: ' + joinConstraints(cons) + '.');
-                seg.push('Output: ' + fmt + '.');
-                return seg.join(' ');
-            }
-            // Standard: clearly labeled sections (works well for Claude / Codex / generic).
-            var lines = [];
-            lines.push('Role: You are ' + role + '.');
-            if (ctx) lines.push('Context: ' + ctx + '.');
-            lines.push('Task: ' + task);
-            lines.push('Constraints:');
-            cons.forEach(function (c) { lines.push('- ' + c); });
-            lines.push('Output: ' + fmt + '.');
-            return lines.join('\n');
+            if (level >= 2) { var roleNoun = role.replace(/^an? /, ''); var parts = [roleNoun + '.']; if (ctx) parts.push('Ctx: ' + ctx + '.'); parts.push(task); parts.push('Limits: ' + joinConstraints(cons) + '.'); parts.push('Out: ' + fmt + '.'); return compress(parts.join(' '), 2); }
+            if (level === 1) { var seg = ['You are ' + role + '.']; if (ctx) seg.push('Context: ' + ctx + '.'); seg.push(task); seg.push('Constraints: ' + joinConstraints(cons) + '.'); seg.push('Output: ' + fmt + '.'); return seg.join(' '); }
+            var lines = ['Role: You are ' + role + '.']; if (ctx) lines.push('Context: ' + ctx + '.'); lines.push('Task: ' + task); lines.push('Constraints:'); cons.forEach(function (c) { lines.push('- ' + c); }); lines.push('Output: ' + fmt + '.'); return lines.join('\n');
         }
-
-        /* ---------- Copy to clipboard (with execCommand fallback) ---------- */
-        function copyText(text, okMsg) {
-            function fallback() {
-                try {
-                    var ta = document.createElement('textarea');
-                    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-                    document.body.appendChild(ta); ta.focus(); ta.select();
-                    document.execCommand('copy'); ta.remove();
-                    toast(okMsg || 'Copied to clipboard.', 'success');
-                } catch (e) { toast('Copy failed — select and copy manually.', 'urgent'); }
-            }
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(function () {
-                    toast(okMsg || 'Copied to clipboard.', 'success');
-                }, fallback);
-            } else { fallback(); }
-        }
-
-        /* ---------- Speech-to-text dictation into a field ---------- */
-        var dictation = null;
-        function dictateInto(textarea, button, onChange) {
-            if (!SR) { toast('Speech recognition not supported in this browser.', 'urgent'); return; }
-            if (dictation) { try { dictation.stop(); } catch (e) {} return; }
-            var base = textarea.value ? textarea.value.trim() + ' ' : '';
-            dictation = new SR();
-            dictation.lang = 'en-US'; dictation.interimResults = true; dictation.continuous = false;
-            button.classList.add('listening'); button.textContent = '● Listening';
-            dictation.onresult = function (e) {
-                var s = '';
-                for (var i = 0; i < e.results.length; i++) s += e.results[i][0].transcript;
-                textarea.value = base + s.trim();
-                if (onChange) onChange();
-            };
-            dictation.onerror = function (ev) {
-                if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') toast('Microphone blocked.', 'urgent');
-            };
-            dictation.onend = function () {
-                dictation = null; button.classList.remove('listening'); button.textContent = '🎤 Dictate';
-            };
-            try { dictation.start(); } catch (e) { dictation = null; button.classList.remove('listening'); button.textContent = '🎤 Dictate'; }
-        }
-
-        /* ---------- OPTIONAL live AI dispatch (user's own key) ----------
-           A pure front-end app CANNOT securely hold an API key — an embedded key
-           is visible to anyone. The recommended production path is a backend
-           proxy (documented in the README). This optional path uses a key the
-           user pastes into Settings (localStorage only) and is gated + inert
-           without one. No key is ever hardcoded. */
         function refineWithAI(promptText, onText, onErr) {
-            var s = state.settings;
-            if (!s.apiKey) { onErr('Add your own API key in Settings to enable live AI refine.'); return; }
+            var s = state.settings; if (!s.apiKey) { onErr('Add your own API key in Settings to enable live AI refine.'); return; }
             var provider = s.aiProvider || 'anthropic';
-            var sys = 'You are a prompt engineer. Rewrite the user content into the tightest, most ' +
-                      'token-efficient, well-structured prompt that fully preserves intent. ' +
-                      'Reply with ONLY the improved prompt — no preamble, no commentary.';
+            var sys = 'You are a prompt engineer. Rewrite the user content into the tightest, most token-efficient, well-structured prompt that fully preserves intent. Reply with ONLY the improved prompt — no preamble.';
             var url, headers, body, pick;
-            if (provider === 'openai') {
-                url = 'https://api.openai.com/v1/chat/completions';
-                headers = { 'content-type': 'application/json', 'authorization': 'Bearer ' + s.apiKey };
-                body = { model: s.apiModel || 'gpt-4o-mini', messages: [{ role: 'system', content: sys }, { role: 'user', content: promptText }] };
-                pick = function (d) { return d && d.choices && d.choices[0] && d.choices[0].message ? d.choices[0].message.content : ''; };
-            } else {
-                url = 'https://api.anthropic.com/v1/messages';
-                headers = {
-                    'content-type': 'application/json',
-                    'x-api-key': s.apiKey,
-                    'anthropic-version': '2023-06-01',
-                    'anthropic-dangerous-direct-browser-access': 'true'
-                };
-                body = { model: s.apiModel || 'claude-opus-4-8', max_tokens: 1024, system: sys, messages: [{ role: 'user', content: promptText }] };
-                pick = function (d) {
-                    if (!d || !d.content) return '';
-                    var blk = d.content.find(function (b) { return b.type === 'text'; });
-                    return blk ? blk.text : '';
-                };
-            }
+            if (provider === 'openai') { url = 'https://api.openai.com/v1/chat/completions'; headers = { 'content-type': 'application/json', 'authorization': 'Bearer ' + s.apiKey }; body = { model: s.apiModel || 'gpt-4o-mini', messages: [{ role: 'system', content: sys }, { role: 'user', content: promptText }] }; pick = function (d) { return d && d.choices && d.choices[0] && d.choices[0].message ? d.choices[0].message.content : ''; }; }
+            else { url = 'https://api.anthropic.com/v1/messages'; headers = { 'content-type': 'application/json', 'x-api-key': s.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }; body = { model: s.apiModel || 'claude-opus-4-8', max_tokens: 1024, system: sys, messages: [{ role: 'user', content: promptText }] }; pick = function (d) { if (!d || !d.content) return ''; var b = d.content.find(function (x) { return x.type === 'text'; }); return b ? b.text : ''; }; }
             fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(body) })
-                .then(function (res) {
-                    return res.json().then(function (data) {
-                        if (!res.ok) {
-                            var msg = (data && data.error && (data.error.message || data.error.type)) || ('HTTP ' + res.status);
-                            throw new Error(msg);
-                        }
-                        return data;
-                    });
-                })
-                .then(function (data) {
-                    var out = (pick(data) || '').trim();
-                    if (out) onText(out); else onErr('Empty response from the API.');
-                })
+                .then(function (res) { return res.json().then(function (data) { if (!res.ok) { throw new Error((data && data.error && (data.error.message || data.error.type)) || ('HTTP ' + res.status)); } return data; }); })
+                .then(function (data) { var out = (pick(data) || '').trim(); if (out) onText(out); else onErr('Empty response from the API.'); })
                 .catch(function (e) { onErr(e.message || 'Request failed.'); });
         }
-
-        /* ---------- Prompt Forge modal ---------- */
         function openForge(seed) {
             var level = 0;
-
-            // Input
-            var input = document.createElement('textarea');
-            input.placeholder = 'Describe what you want in plain words… e.g. “write a short friendly launch tweet for J8NIX”';
-            input.value = seed || '';
-            var inWrap = document.createElement('div'); inWrap.className = 'forge-input-wrap';
+            var input = el('textarea'); input.placeholder = 'Describe what you want in plain words…'; input.value = seed || '';
             var inField = field('Your request', input);
-            var mic = document.createElement('button'); mic.type = 'button'; mic.className = 'mic-btn'; mic.textContent = '🎤 Dictate';
-            mic.title = 'Dictate with your voice';
-            inField.appendChild(mic);
-            inField.classList.add('forge-input-wrap');
-
-            // Starter chips — one tap to seed a common request (discoverability + good defaults).
-            var starters = [
-                ['📣 Launch tweet', 'write a short, friendly launch tweet with one example'],
-                ['🐛 Debug code', 'find and fix the bug in this function and explain the cause'],
-                ['📊 Summarize', 'summarize this document in 5 concise bullet points'],
-                ['📧 Cold email', 'draft a brief, warm outreach email with a clear call to action'],
-                ['🗺 Plan', 'outline a step-by-step plan to ship this project']
-            ];
-            var chipsWrap = document.createElement('div'); chipsWrap.className = 'forge-chips';
-            chipsWrap.setAttribute('aria-label', 'Starter prompts');
-            starters.forEach(function (s) {
-                var c = document.createElement('button'); c.type = 'button'; c.className = 'chip';
-                c.textContent = s[0]; c.title = s[1];
-                c.addEventListener('click', function () { input.value = s[1]; level = 0; regen(); input.focus(); });
-                chipsWrap.appendChild(c);
-            });
-
-            // Target + context
-            var target = document.createElement('select');
-            [['claude', 'Claude'], ['codex', 'Codex / code model'], ['generic', 'Generic LLM']].forEach(function (o) {
-                var op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; target.appendChild(op);
-            });
-            var ctx = document.createElement('select');
-            var none = document.createElement('option'); none.value = ''; none.textContent = 'No project context'; ctx.appendChild(none);
-            state.projects.forEach(function (p) {
-                var op = document.createElement('option');
-                op.value = p.project + (p.client ? ' (' + p.client + ')' : '');
-                op.textContent = op.value; ctx.appendChild(op);
-            });
-            var grid = document.createElement('div'); grid.className = 'forge-grid';
-            grid.appendChild(field('Target', target));
-            grid.appendChild(field('Project context (optional)', ctx));
-
-            // Output
-            var outLabel = document.createElement('div'); outLabel.className = 'forge-label'; outLabel.textContent = 'Engineered prompt';
-            var out = document.createElement('textarea'); out.className = 'forge-out'; out.readOnly = true;
-            out.setAttribute('aria-label', 'Generated prompt');
-            out.placeholder = 'Your engineered prompt appears here. Type a request above, tap a starter, or dictate with the mic.';
-
-            // Meta row: tokens + level
-            var meta = document.createElement('div'); meta.className = 'forge-meta';
-            var tok = document.createElement('span'); tok.className = 'token-badge';
-            var tokDot = document.createElement('span'); tokDot.className = 'dot';
-            var tokTxt = document.createElement('span'); tokTxt.textContent = '~0 tokens';
-            tok.appendChild(tokDot); tok.appendChild(tokTxt);
-            var lvl = document.createElement('span'); lvl.className = 'forge-level';
-            meta.appendChild(tok); meta.appendChild(lvl);
-
-            // Action buttons
-            var actions = document.createElement('div'); actions.className = 'forge-actions';
+            var starters = [['📣 Launch tweet', 'write a short, friendly launch tweet with one example'], ['🐛 Debug code', 'find and fix the bug in this function and explain the cause'], ['📊 Summarize', 'summarize this document in 5 concise bullet points'], ['📧 Cold email', 'draft a brief, warm outreach email with a clear call to action'], ['🗺 Plan', 'outline a step-by-step plan to ship this project']];
+            var chipsWrap = el('div', 'forge-chips'); chipsWrap.setAttribute('aria-label', 'Starter prompts');
+            starters.forEach(function (s) { var c = el('button', 'chip', s[0]); c.type = 'button'; c.title = s[1]; c.addEventListener('click', function () { input.value = s[1]; level = 0; regen(); input.focus(); }); chipsWrap.appendChild(c); });
+            var target = el('select'); [['claude', 'Claude'], ['codex', 'Codex / code model'], ['generic', 'Generic LLM']].forEach(function (o) { target.appendChild(new Option(o[1], o[0])); });
+            var ctx = el('select'); ctx.appendChild(new Option('No project context', '')); state.projects.forEach(function (p) { ctx.appendChild(new Option(p.name, p.name)); });
+            var grid = el('div', 'forge-grid'); grid.appendChild(field('Target', target)); grid.appendChild(field('Project context (optional)', ctx));
+            var outLabel = el('div', 'forge-label', 'Engineered prompt');
+            var out = el('textarea', 'forge-out'); out.readOnly = true; out.setAttribute('aria-label', 'Generated prompt'); out.placeholder = 'Your engineered prompt appears here.';
+            var meta = el('div', 'forge-meta'); var tok = el('span', 'token-badge'); tok.appendChild(el('span', 'dot')); var tokTxt = el('span', null, '~0 tokens'); tok.appendChild(tokTxt);
+            var lvl = el('span', 'forge-level'); meta.appendChild(tok); meta.appendChild(lvl);
+            var actions = el('div', 'forge-actions');
             var copyBtn = btn('📋 Copy', 'primary', function () { if (out.value) copyText(out.value, 'Prompt copied.'); });
-            var tightenBtn = btn('🗜 Tighten further', 'ghost', function () {
-                if (level < 2) { level++; regen(); }
-                if (level >= 2) tightenBtn.disabled = true;
-            });
-            var readBtn = btn('🔊 Read aloud', 'ghost', function () {
-                if (!out.value) return;
-                var label = target.options[target.selectedIndex].text;
-                speak('Optimized prompt for ' + label + ', about ' + estTokens(out.value) + ' tokens. ' + out.value);
-            });
-            var aiBtn = btn('✨ Refine with AI', 'ghost', function () {
-                if (!out.value) return;
-                aiBtn.disabled = true; aiBtn.textContent = '✨ Refining…';
-                refineWithAI(out.value, function (text) {
-                    out.value = text; tokTxt.textContent = '~' + estTokens(text) + ' tokens';
-                    lvl.textContent = 'AI-refined';
-                    aiBtn.disabled = false; aiBtn.textContent = '✨ Refine with AI';
-                    toast('Prompt refined by your AI provider.', 'success');
-                    if (state.settings.voiceEnabled) speak('Refined with AI.');
-                }, function (err) {
-                    aiBtn.disabled = false; aiBtn.textContent = '✨ Refine with AI';
-                    toast(err, 'urgent');
-                });
-            });
-            actions.appendChild(copyBtn); actions.appendChild(tightenBtn);
-            actions.appendChild(readBtn); actions.appendChild(aiBtn);
-
-            // AI-path note (honest about gating)
-            var aiNote = document.createElement('p'); aiNote.className = 'forge-note';
-            function refreshAiNote() {
-                if (state.settings.apiKey) {
-                    aiBtn.disabled = false;
-                    aiNote.textContent = '✨ Live refine uses your own ' + (state.settings.aiProvider === 'openai' ? 'OpenAI' : 'Anthropic') + ' key (stored locally). For production, use a backend proxy — see README.';
-                } else {
-                    aiBtn.disabled = true;
-                    aiNote.textContent = 'Live AI refine is off. The optimized prompt above works fully offline — copy it into Claude, Codex, or any tool. Add your own API key in Settings to enable optional refine.';
-                }
-            }
-
-            function regen() {
-                var p = forgePrompt(input.value, target.value, ctx.value, level);
-                out.value = p;
-                var has = !!p;
-                tokTxt.textContent = '~' + (has ? estTokens(p) : 0) + ' tokens';
-                lvl.textContent = has ? ['Standard', 'Tight', 'Tightest'][level] : '';
-                // Gate actions until there's an actual prompt to act on.
-                copyBtn.disabled = !has;
-                readBtn.disabled = !has;
-                tightenBtn.disabled = !has || level >= 2;
-                aiBtn.disabled = !(state.settings.apiKey && has);
-            }
-            input.addEventListener('input', function () { level = 0; regen(); });
-            target.addEventListener('change', function () { regen(); });
-            ctx.addEventListener('change', regen);
-            mic.addEventListener('click', function () { dictateInto(input, mic, regen); });
-
-            refreshAiNote();
-            regen();
-
-            var foot = [ btn('Done', 'ghost', closeModal) ];
-            openModal('🔥 Prompt Forge', [inField, chipsWrap, grid, outLabel, out, meta, actions, aiNote], foot, true);
-
-            if (state.settings.voiceEnabled) speak('Prompt Forge ready.');
+            var tightenBtn = btn('🗜 Tighten further', 'ghost', function () { if (level < 2) { level++; regen(); } if (level >= 2) tightenBtn.disabled = true; });
+            var readBtn = btn('🔊 Read aloud', 'ghost', function () { if (out.value) speak('Optimized prompt, about ' + estTokens(out.value) + ' tokens. ' + out.value); });
+            var aiBtn = btn('✨ Refine with AI', 'ghost', function () { if (!out.value) return; aiBtn.disabled = true; aiBtn.textContent = '✨ Refining…'; refineWithAI(out.value, function (text) { out.value = text; tokTxt.textContent = '~' + estTokens(text) + ' tokens'; lvl.textContent = 'AI-refined'; aiBtn.disabled = false; aiBtn.textContent = '✨ Refine with AI'; toast('Prompt refined.', 'success'); }, function (err) { aiBtn.disabled = false; aiBtn.textContent = '✨ Refine with AI'; toast(err, 'urgent'); }); });
+            actions.appendChild(copyBtn); actions.appendChild(tightenBtn); actions.appendChild(readBtn); actions.appendChild(aiBtn);
+            var aiNote = el('p', 'forge-note');
+            function refreshAiNote() { if (state.settings.apiKey) { aiBtn.disabled = false; aiNote.textContent = '✨ Live refine uses your own ' + (state.settings.aiProvider === 'openai' ? 'OpenAI' : 'Anthropic') + ' key (local only).'; } else { aiBtn.disabled = true; aiNote.textContent = 'Live AI refine is off. The prompt above works fully offline — copy it into Claude or any tool. Add a key in Settings to enable refine.'; } }
+            function regen() { var p = forgePrompt(input.value, target.value, ctx.value, level); out.value = p; var has = !!p; tokTxt.textContent = '~' + (has ? estTokens(p) : 0) + ' tokens'; lvl.textContent = has ? ['Standard', 'Tight', 'Tightest'][level] : ''; copyBtn.disabled = !has; readBtn.disabled = !has; tightenBtn.disabled = !has || level >= 2; aiBtn.disabled = !(state.settings.apiKey && has); }
+            input.addEventListener('input', function () { level = 0; regen(); }); target.addEventListener('change', regen); ctx.addEventListener('change', regen);
+            refreshAiNote(); regen();
+            openModal('🔥 Prompt Forge', [inField, chipsWrap, grid, outLabel, out, meta, actions, aiNote], [btn('Done', 'ghost', closeModal)], true);
         }
 
-        /* ---------- Quick actions ---------- */
-        function quickAction(kind) {
-            switch (kind) {
-                case 'forge': openForge(''); break;
-                case 'newProject': addProject(); toast('New project added.', 'success'); break;
-                case 'newTask': addTask(); toast('New task added.', 'success'); break;
-                case 'memo': toggleRecord(); break;
-                case 'reminder':
-                    var what = prompt('Remind you about what?');
-                    if (what) { state.tasks.push({ id: nextId(state.tasks), project: '⏰ ' + what, created: todayISO(), deadline: 'Today', who: state.settings.userName.split(' ')[0], status: 'New', more: 'reminder' }); save(); renderTasks(); updateProgress(); updateStats(); toast('Reminder set.', 'success'); }
-                    break;
-                case 'audit':
-                    var atRisk = state.projects.filter(function (p){return p.status==='At Risk';}).length;
-                    var blocked = state.tasks.filter(function (t){return t.status==='Blocked';}).length;
-                    appendMessage('system', { text: 'Audit: ' + state.projects.length + ' projects (' + atRisk + ' at risk), ' + state.tasks.length + ' tasks (' + blocked + ' blocked).' });
-                    if (state.settings.voiceEnabled) speak('Audit complete. ' + atRisk + ' projects at risk, ' + blocked + ' tasks blocked.');
-                    toast('Project audit complete.', 'success');
-                    break;
-            }
-        }
+        /* ---------- Clock ---------- */
+        function tickClock() { $('#clockLabel').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 
-        /* ---------- Wire up events ---------- */
-        $('#addTaskBtn').addEventListener('click', addTask);
-        $('#addProjectBtn').addEventListener('click', addProject);
-        $('#tabActive').addEventListener('click', function () { setProjectTab('active'); });
-        $('#tabDone').addEventListener('click', function () { setProjectTab('done'); });
-        $('#sendBtn').addEventListener('click', sendMessage);
-        $('#chatInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') sendMessage(); });
-        $('#recBtn').addEventListener('click', toggleRecord);
-        $('#speakBtn').addEventListener('click', function () {
-            var msgs = $('#chatFeed').querySelectorAll('.message.system span');
-            if (msgs.length) speak(msgs[msgs.length - 1].textContent);
-            else speak('Hello ' + (state.settings.userName.split(' ')[0]||'') + ', J8NIX is ready.');
-        });
-        $('#wakeBtn').addEventListener('click', toggleWake);
+        /* ---------- Wire up ---------- */
+        $('#briefBtn').addEventListener('click', doBrief);
         $('#forgeBtn').addEventListener('click', function () { openForge(''); });
+        $('#helpBtn').addEventListener('click', openHelp);
         $('#settingsBtn').addEventListener('click', openSettings);
-        var sbm = $('#settingsBtnMobile'); if (sbm) sbm.addEventListener('click', openSettings);
-        $('#modalClose').addEventListener('click', closeModal);
-        modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
-        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && modal.classList.contains('open')) closeModal(); });
-        $('#calPrev').addEventListener('click', function () { calRef.setMonth(calRef.getMonth() - 1); renderCalendar(); });
-        $('#calNext').addEventListener('click', function () { calRef.setMonth(calRef.getMonth() + 1); renderCalendar(); });
-        Array.prototype.forEach.call(document.querySelectorAll('[data-qa]'), function (b) {
-            b.addEventListener('click', function () { quickAction(b.getAttribute('data-qa')); });
-        });
+        $('#addWaitBtn').addEventListener('click', addWaiting);
+        $('#claudeCopy').addEventListener('click', copyClaude);
+        $('#claudeClear').addEventListener('click', function () { $('#claudeInput').value = ''; $('#claudeCtx').value = ''; $('#claudeInput').focus(); });
+        $('#claudeInput').addEventListener('keydown', function (e) { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') copyClaude(); });
 
         /* ---------- Init ---------- */
-        $('#userInfo').textContent = state.settings.userName + ' • ' + state.settings.org;
-        renderTasks(); renderProjects(); updateProgress(); updateStats(); renderCalendar();
-        // restore chat history (text only)
-        if (state.chat && state.chat.length) {
-            state.chat.slice(-30).forEach(function (m) {
-                var div = document.createElement('div');
-                div.className = 'message ' + (m.role === 'user' ? 'user' : 'system');
-                var span = document.createElement('span'); span.textContent = m.text; div.appendChild(span);
-                if (m.t) {
-                    var meta = document.createElement('div'); meta.className = 'meta';
-                    meta.textContent = new Date(m.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    div.appendChild(meta);
-                }
-                $('#chatFeed').appendChild(div);
-            });
-            $('#chatFeed').scrollTop = $('#chatFeed').scrollHeight;
-        } else {
-            appendMessage('system', { text: 'Welcome back, ' + (state.settings.userName.split(' ')[0]||'Dave') + '. How can I make your operations smarter today?', transient: true });
-        }
+        applyIdentity(); fillCtx(); renderPulse(); renderProjects(); renderWaiting();
         tickClock(); setInterval(tickClock, 30000);
-        if (state.settings.driveMode) startDriveDetection();
-        if (!state.settings.onboarded) setTimeout(runOnboarding, 500);
 
-        // expose minimal debug hook (no eval, read-only)
-        window.J8NIX = { version: '1.2.0', reset: function () { localStorage.removeItem(STORE_KEY); location.reload(); } };
+        // read-only debug hook (no eval)
+        window.J8NIX = { version: VERSION, reset: function () { localStorage.removeItem(STORE_KEY); location.reload(); }, state: function () { return state; } };
     })();
     </script>
 </body>
