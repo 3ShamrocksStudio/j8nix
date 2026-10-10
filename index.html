@@ -375,23 +375,33 @@
             return {
                 settings: { userName: 'Dave Markovich', org: '3Shamrocks Studio', voiceEnabled: true, voiceName: '', aiProvider: 'anthropic', apiModel: '', apiKey: '', ttsKey: '', ttsVoiceId: '' },
                 projects: [
-                    { key: 'th-mvp',   name: 'Trashure-Hunters · MVP', cat: 'App build', status: 'wait', url: BASE + 'th-website/',
-                      ship: [ { t: 'Regenerate Anthropic API key', done: false }, { t: 'Add Firebase credentials', done: false }, { t: 'Re-test end to end', done: false } ] },
+                    { key: 'th-mvp',   name: 'Trashure-Hunters · MVP', cat: 'App build', status: 'wait', url: BASE + 'th-mvp-web/',
+                      ship: [ { t: 'Send Supabase URL + anon key', done: false }, { t: 'Regenerate the exposed Anthropic API key', done: false }, { t: 'Re-test end to end', done: false } ] },
+                    { key: 'shomer-app', name: 'SH✡MER', cat: 'App + site', status: 'live', url: 'https://www.shomer-app.co.il/',
+                      ship: [ { t: 'Run firebase deploy --only database (or send a login:ci token)', done: false }, { t: 'Re-enable Twilio Fraud Guard', done: false } ] },
+                    { key: 'lickpick', name: 'LickPick', cat: 'App', status: 'live', url: BASE + 'lickpick/',
+                      ship: [ { t: 'Test 3–5 real jams on Android, send the Test report', done: false } ] },
+                    { key: 'gambit-app', name: 'Rookie & King', cat: 'App', status: 'live', url: BASE + 'gambit-app/',
+                      ship: [ { t: 'Review the live build', done: false } ] },
+                    { key: 'fairent', name: 'Fairent', cat: 'App', status: 'live', url: BASE + 'fairent/',
+                      ship: [ { t: 'Create a free Supabase project so reports are shared', done: false } ] },
+                    { key: 'shomer-nature', name: 'SH✡MER Nature', cat: 'App', status: 'live', url: BASE + 'shomer-nature/',
+                      ship: [ { t: 'Review the live build', done: false } ] },
                     { key: 'ig-network', name: 'IG Network', cat: 'Media · social', status: 'wait', url: BASE + 'media-network-hub/kit.html',
                       ship: [ { t: 'Finalize the 4 account names (paused here)', done: false }, { t: 'Create the 4 Instagram accounts', done: false } ] },
                     { key: 'th-movie', name: 'Trashure-Hunters · Movie', cat: 'Media · script', status: 'wait', url: '',
                       ship: [ { t: 'Decide script length — ~55 min vs ~90 min', done: false } ] },
                     { key: 'cosmix',   name: 'Cosmix', cat: 'Brand · creative', status: 'wait', url: '',
                       ship: [ { t: 'Pick creative direction — option A or option C', done: false } ] },
-                    { key: 'shomer-forest', name: 'SHOMER · Forest', cat: 'Live experience', status: 'live', url: BASE + 'shomer-forest/',
+                    { key: 'shomer-forest', name: 'SH✡MER · Forest', cat: 'Live experience', status: 'live', url: BASE + 'shomer-forest/',
                       ship: [ { t: 'Review the live build end to end', done: false }, { t: 'Check controls + audio on mobile', done: false } ] },
-                    { key: 'shomer-beach',  name: 'SHOMER · Beach', cat: 'Live experience', status: 'live', url: BASE + 'shomer-beach/',
+                    { key: 'shomer-beach',  name: 'SH✡MER · Beach', cat: 'Live experience', status: 'live', url: BASE + 'shomer-beach/',
                       ship: [ { t: 'Test the live build', done: false } ] },
                     { key: 'milo-app',  name: 'Milo', cat: 'App', status: 'live', url: BASE + 'milo-app/',
                       ship: [ { t: 'Test live flow', done: false }, { t: 'Review copy', done: false } ] },
-                    { key: 'chore-wars', name: 'Chore Wars', cat: 'App', status: 'live', url: BASE + 'chore-wars/',
+                    { key: 'chore-wars', name: 'Chore Royale', cat: 'App', status: 'live', url: BASE + 'chore-wars/',
                       ship: [ { t: 'Test the live flow', done: false } ] },
-                    { key: 'senior-helper', name: 'Senior Helper', cat: 'App', status: 'live', url: BASE + 'senior-helper/',
+                    { key: 'senior-helper', name: 'Ezra', cat: 'App', status: 'live', url: BASE + 'senior-helper/',
                       ship: [ { t: 'Test live', done: false }, { t: 'Accessibility pass', done: false } ] },
                     { key: 'th-website', name: 'Trashure-Hunters · Site', cat: 'Website', status: 'live', url: BASE + 'th-website/',
                       ship: [ { t: 'Review the live site', done: false } ] },
@@ -408,7 +418,7 @@
                     { id: 'w1', pk: 'ig-network', proj: 'IG Network', pri: 'high', note: 'Paused on final account names',
                       doing: ['Finalize the 4 account names', 'Create the 4 Instagram accounts'], link: { label: 'Open brand kit', url: BASE + 'media-network-hub/kit.html' } },
                     { id: 'w2', pk: 'th-mvp', proj: 'Trashure-Hunters · MVP', pri: 'high', note: '',
-                      doing: ['Regenerate Anthropic API key', 'Add Firebase credentials', 'Re-test end to end'], link: { label: 'Open live site', url: BASE + 'th-website/' } },
+                      doing: ['Send Supabase URL + anon key', 'Regenerate the exposed Anthropic API key', 'Re-test end to end'], link: { label: 'Open live app', url: BASE + 'th-mvp-web/' } },
                     { id: 'w3', pk: 'th-movie', proj: 'Trashure-Hunters · Movie', pri: 'med', note: '',
                       doing: ['Decide script length — ~55 min vs ~90 min'], link: null },
                     { id: 'w4', pk: 'cosmix', proj: 'Cosmix', pri: 'med', note: '',
@@ -425,6 +435,10 @@
             if (!state.projects || !state.settings || !state.waiting) state = defaultState();
             var ds = defaultState().settings;
             for (var k in ds) { if (!(k in state.settings)) state.settings[k] = ds[k]; }
+            // migrate saved boards: add products launched since, and apply official renames you haven't overridden
+            var dp = defaultState().projects, have = {}; state.projects.forEach(function (p) { have[p.key] = p; });
+            var RENAMED = { 'chore-wars': 'Chore Wars', 'senior-helper': 'Senior Helper', 'shomer-forest': 'SHOMER · Forest', 'shomer-beach': 'SHOMER · Beach' };
+            dp.forEach(function (p) { if (!have[p.key]) state.projects.push(p); else if (RENAMED[p.key] && have[p.key].name === RENAMED[p.key]) have[p.key].name = p.name; });
         } catch (e) { state = defaultState(); }
 
         var saveTimer;
