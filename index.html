@@ -23,36 +23,47 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0d1c2b;               /* command-center canvas (deep navy) */
-            --bg-2: #11283c;
+            /* ── J8NIX palette, built from the logo and nothing else ──────────────
+               The wordmark is ONE colour on transparent: #f2c194, a soft peach, in
+               thin elegant strokes. It is not gold. Calling it gold is what put a
+               mustard (#d4892a) and a salmon (#e05650) on a saturated navy next to
+               it - three loud colours around a quiet mark, all fighting it.
+               The brand mood is warm, restrained, precise. So: ONE warm accent (the
+               logo peach, untouched), a cool slate spine taken from the icon plate
+               (#586475), and every status colour desaturated to sit beside the peach
+               instead of shouting over it. The logo files are not touched. */
+            --bg: #1a2230;               /* deep slate - the icon plate, darkened. not navy */
+            --bg-2: #222c3c;
             --panel-bg: #ffffff;
-            --header-bg: #0a1622;        /* dark — the J8NIX gold wordmark lives here */
-            --header-bg-2: #11283c;
-            --accent: #f2c194;           /* brand gold */
-            --accent-deep: #e0a878;
-            --text: #102a43;
-            --text-sub: #5a6b80;
-            --neutral: #586475;
-            --border: #e3e9f1;
-            --shadow: 0 6px 24px rgba(0,0,0,.16);
+            --header-bg: #151c27;        /* the peach wordmark sits on this */
+            --header-bg-2: #1f2836;
+            --accent: #f2c194;           /* THE brand colour, straight off the wordmark */
+            --accent-deep: #dca571;      /* same hue, deeper - hover and active only */
+            --accent-tint: #fbeada;      /* peach at 12% - quiet backgrounds */
+            --on-accent: #4a3216;        /* the only text colour that goes ON the peach */
+            --text: #243244;             /* slate family, not blue-black */
+            --text-sub: #5c6b7e;
+            --neutral: #586475;          /* the icon plate slate, unchanged */
+            --border: #e2e7ee;
+            --shadow: 0 6px 24px rgba(26,34,48,.14);
             --radius: 16px;
-            /* status system */
-            --st-live: #2f9e63;          --st-live-bg: #e6f5ec;
-            --st-prog: #2f74c0;          --st-prog-bg: #e4eefb;
-            --st-wait: #d4892a;          --st-wait-bg: #fcf1e1;
-            --st-back: #76859a;          --st-back-bg: #eef2f7;
+            /* status - all desaturated into the slate/peach world */
+            --st-live: #4e9478;          --st-live-bg: #e8f2ed;   /* sage, not signal green */
+            --st-prog: #5a7fa8;          --st-prog-bg: #e7edf5;   /* steel blue, echoes the slate */
+            --st-wait: #c08f4f;          --st-wait-bg: #f8efe2;   /* soft ochre - peach family, not mustard */
+            --st-back: #76859a;          --st-back-bg: #eef1f6;
             /* priority */
-            --pri-high: #e05650;         --pri-med: #d4892a;          --pri-low: #76859a;
+            --pri-high: #c2705f;         --pri-med: #c08f4f;          --pri-low: #76859a;
         }
         * { box-sizing: border-box; }
         html, body { height: 100%; }
         body {
             margin: 0;
-            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-            background: radial-gradient(1200px 600px at 80% -10%, #16344c 0%, var(--bg) 55%);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(1200px 600px at 80% -10%, #2b3749 0%, var(--bg) 55%);
             color: #e8eef5;
             font-size: 14px; line-height: 1.5;
             display: flex; flex-direction: column; height: 100vh;
@@ -88,7 +99,7 @@
         .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--st-live); }
         .hdr-btn { background: rgba(255,255,255,.08); color: #eaf1f8; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; padding: 8px 13px; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 6px; }
         .hdr-btn:hover { background: rgba(255,255,255,.16); }
-        .hdr-btn.gold { background: var(--accent); color: #4a3216; border-color: transparent; }
+        .hdr-btn.gold { background: var(--accent); color: var(--on-accent); border-color: transparent; }
         .hdr-btn.gold:hover { filter: brightness(1.05); }
 
         /* ---------------- Workspace grid (above the fold) ---------------- */
@@ -115,7 +126,7 @@
 
         button { cursor: pointer; border: none; border-radius: 999px; padding: 9px 15px; font-weight: 700; font-size: 13px; font-family: inherit; transition: transform .08s ease, filter .15s ease, background .15s ease; }
         button:active { transform: translateY(1px); }
-        .primary { background: var(--accent); color: #4a3216; }
+        .primary { background: var(--accent); color: var(--on-accent); }
         .primary:hover { filter: brightness(1.05); }
         .ghost { background: #eef3f8; color: var(--neutral); }
         .ghost:hover { background: #e3ebf3; }
@@ -138,7 +149,7 @@
         .wait-note { font-size: 11.5px; color: var(--st-wait); font-weight: 700; margin-top: 6px; }
         .wait-actions { display: flex; gap: 8px; margin-top: 11px; flex-wrap: wrap; }
         .wait-actions a, .wait-actions button { font-size: 12px; padding: 7px 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; }
-        .link-btn { background: var(--accent); color: #4a3216; font-weight: 700; }
+        .link-btn { background: var(--accent); color: var(--on-accent); font-weight: 700; }
         .link-btn:hover { filter: brightness(1.05); }
         .detail-btn { background: #eef3f8; color: var(--neutral); font-weight: 700; }
         .detail-btn:hover { background: #e3ebf3; }
@@ -169,7 +180,7 @@
         .pc-actions { display: flex; gap: 7px; margin-top: 2px; }
         .pc-actions a, .pc-actions button { flex: 1; text-align: center; font-size: 12px; padding: 8px 6px; border-radius: 9px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
         .pc-open { background: var(--header-bg); color: #fff; font-weight: 700; }
-        .pc-open:hover { background: #16344c; }
+        .pc-open:hover { background: #2b3749; }
         .pc-open.disabled { background: #eef2f7; color: #9aa7b6; pointer-events: none; }
         .pc-details { background: #eef3f8; color: var(--neutral); font-weight: 700; }
         .pc-details:hover { background: #e3ebf3; }
