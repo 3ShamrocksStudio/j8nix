@@ -251,9 +251,12 @@
         .chip:hover { background: #eef3f8; color: var(--text); }
 
         /* toasts */
-        .toast-stack { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 90; max-width: 330px; }
-        .toast { background: #14283b; color: #fff; padding: 13px 16px; border-radius: 12px; font-size: 13px; box-shadow: 0 10px 30px rgba(0,0,0,.35); animation: slidein .25s ease; }
-        .toast.success { background: #2f8f5b; } .toast.urgent { background: #c94642; }
+        /* pointer-events:none — the stack sits above the modal (z 90 vs 80), so without this it
+           swallowed every click inside its box for the whole toast duration, including the
+           close button underneath it. Toasts themselves stay clickable. */
+        .toast-stack { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 90; max-width: 330px; pointer-events: none; }
+        .toast { pointer-events: auto; background: var(--header-bg); color: #fff; padding: 13px 16px; border-radius: 12px; font-size: 13px; box-shadow: 0 10px 30px rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.08); animation: slidein .25s ease; }
+        .toast.success { background: var(--st-live); } .toast.urgent { background: var(--pri-high); }
         @keyframes slidein { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
 
         .empty-state { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 30px 16px; color: var(--neutral); }
@@ -459,8 +462,8 @@
         function toast(msg, kind) {
             var t = document.createElement('div'); t.className = 'toast' + (kind ? ' ' + kind : ''); t.textContent = msg;
             $('#toastStack').appendChild(t);
-            setTimeout(function () { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; }, 3200);
-            setTimeout(function () { t.remove(); }, 3600);
+            setTimeout(function () { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; }, 2200);
+            setTimeout(function () { t.remove(); }, 2600);
         }
 
         /* ---------- Small DOM helpers ---------- */
